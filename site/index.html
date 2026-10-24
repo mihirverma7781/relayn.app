@@ -1,600 +1,1289 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark scroll-smooth" lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <meta name="color-scheme" content="dark"/>
-  <meta name="description" content="RelayN Player — A thoughtful desktop player for your local audio and video. Universal codec support, local-first, private, and beautifully designed for Windows and macOS."/>
+  <meta name="description" content="RelayN Player — A dependable, thoughtfully designed desktop home for local audio and video. Universal codec support, local-first privacy, and a calm editorial interface for Windows and macOS."/>
   <meta property="og:title" content="RelayN Player — Your media. In motion."/>
   <meta property="og:description" content="A thoughtful desktop player for your local audio and video. Universal codecs, local-first privacy, and a calm interface for everyday use."/>
   <meta property="og:type" content="website"/>
   <meta property="og:url" content="https://relayn.mihirverma.in"/>
-  <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="RelayN Player"/>
-  <meta name="twitter:description" content="Your media. In motion."/>
+  <meta property="og:image" content="/assets/brand/relayn-app-icon.svg"/>
   <link rel="icon" type="image/svg+xml" href="assets/brand/relayn-app-icon.svg"/>
-  <title>RelayN Player — Your media. In motion.</title>
+  <title>RelayN — Universal Local Media Player</title>
+
+  <!-- Google Fonts: Newsreader (Editorial Serif), Hanken Grotesk (Neutral Sans), Space Mono (Engineered Monospace) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..800;1,300..800&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet"/>
+
+  <!-- Material Symbols Outlined -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <!-- Tailwind CSS Play CDN with container query & form plugins -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <!-- GSAP 3 & ScrollTrigger for premium animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- Tailwind Configuration matching the brand tokens exactly -->
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-base": "#121413",
+            "surface-card": "#171A19",
+            "surface-elevated": "#1E2220",
+            "surface-container": "#1e201f",
+            "surface-container-high": "#282a29",
+            "surface-container-highest": "#333534",
+            "surface-container-low": "#1a1c1b",
+            "surface-container-lowest": "#0d0f0e",
+            "surface-border": "#28302C",
+            "surface-border-subtle": "rgba(169, 195, 173, 0.12)",
+            "text-primary": "#F2F1E9",
+            "text-secondary": "#A7AEA8",
+            "text-muted": "#646E67",
+            "primary": "#c4dfc8",
+            "primary-container": "#a9c3ad",
+            "accent-sage-soft": "#A9C3AD",
+            "accent-sage-vibrant": "#86C29C",
+            "accent-sage-highlight": "#BBF2D8",
+            "secondary-container": "#135133",
+            "kbd-background": "#1A1E1C",
+            "kbd-border": "#2C3530"
+          },
+          fontFamily: {
+            "display": ["Newsreader", "Georgia", "serif"],
+            "headline-lg": ["Newsreader", "Georgia", "serif"],
+            "headline-md": ["Newsreader", "Georgia", "serif"],
+            "headline-sm": ["Newsreader", "Georgia", "serif"],
+            "body-lg": ["Hanken Grotesk", "system-ui", "sans-serif"],
+            "body-md": ["Hanken Grotesk", "system-ui", "sans-serif"],
+            "body-sm": ["Hanken Grotesk", "system-ui", "sans-serif"],
+            "label-mono-md": ["Space Mono", "monospace"],
+            "label-mono-sm": ["Space Mono", "monospace"],
+            "kbd-label": ["Space Mono", "monospace"]
+          },
+          fontSize: {
+            "display": ["64px", { lineHeight: "72px", letterSpacing: "-0.025em", fontWeight: "400" }],
+            "headline-lg": ["44px", { lineHeight: "52px", letterSpacing: "-0.02em", fontWeight: "400" }],
+            "headline-md": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "400" }],
+            "headline-sm": ["22px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "500" }],
+            "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+            "body-md": ["15px", { lineHeight: "24px", fontWeight: "400" }],
+            "body-sm": ["13px", { lineHeight: "20px", fontWeight: "400" }],
+            "label-mono-md": ["12px", { lineHeight: "16px", letterSpacing: "0.08em", fontWeight: "700" }],
+            "label-mono-sm": ["11px", { lineHeight: "16px", letterSpacing: "0.12em", fontWeight: "400" }],
+            "kbd-label": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "400" }]
+          },
+          spacing: {
+            "space-2xs": "0.25rem",
+            "space-xs": "0.5rem",
+            "space-sm": "0.75rem",
+            "space-md": "1.25rem",
+            "space-lg": "2rem",
+            "space-xl": "3.5rem",
+            "space-2xl": "5.5rem",
+            "margin": "1.25rem",
+            "margin-desktop": "3rem"
+          }
+        }
+      }
+    };
+  </script>
+
   <style>
-    /* ── Reset ── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    @keyframes float-slow {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-16px) scale(1.04); }
+    }
+    @keyframes float-reverse {
+      0%, 100% { transform: translateY(0px) scale(1.03); }
+      50% { transform: translateY(18px) scale(0.97); }
+    }
+    @keyframes wave-bar {
+      0%, 100% { height: 4px; }
+      50% { height: 18px; }
+    }
+    @keyframes marquee {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-50%); }
+    }
+    .animate-float-slow {
+      animation: float-slow 14s ease-in-out infinite;
+    }
+    .animate-float-reverse {
+      animation: float-reverse 18s ease-in-out infinite;
+    }
+    .animate-marquee {
+      display: flex;
+      width: max-content;
+      animation: marquee 32s linear infinite;
+    }
+    .animate-marquee:hover {
+      animation-play-state: paused;
+    }
+    .animate-wave-1 { animation: wave-bar 1.2s ease-in-out infinite 0.1s; }
+    .animate-wave-2 { animation: wave-bar 0.9s ease-in-out infinite 0.3s; }
+    .animate-wave-3 { animation: wave-bar 1.4s ease-in-out infinite 0.5s; }
+    .animate-wave-4 { animation: wave-bar 1.1s ease-in-out infinite 0.2s; }
+    .animate-wave-5 { animation: wave-bar 1.3s ease-in-out infinite 0.4s; }
 
-    /* ── Tokens (from branding.md) ── */
-    :root {
-      --bg: #171A19;
-      --lowest: #151817;
-      --low: #202523;
-      --surface: #202523;
-      --high: #292F2C;
-      --highest: #333A36;
-      --text: #F2F1E9;
-      --muted: #A7AEA8;
-      --accent: #A9C3AD;
-      --accent-strong: #C0D5C3;
-      --on-accent: #202522;
-      --outline: #39413C;
-      --danger: #E58B83;
-      --warning: #E4C27D;
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #121413; }
+    ::-webkit-scrollbar-thumb { background: #28302C; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #39413C; }
 
-      --font-sans: 'Hanken Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --font-serif: 'Newsreader', 'Georgia', serif;
-      --font-mono: 'Space Mono', 'SF Mono', 'Menlo', monospace;
-
-      --max-w: 1120px;
-      --section-gap: 120px;
-      --radius: 12px;
-      --radius-sm: 8px;
+    /* Card hover glow */
+    .glow-hover {
+      position: relative;
     }
-
-    /* ── Fonts ── */
-    @font-face {
-      font-family: 'Hanken Grotesk';
-      font-style: normal;
-      font-weight: 300 800;
-      font-display: swap;
-      src: url('https://fonts.gstatic.com/s/hankengrotesk/v21/ieVq2YZDLWuGJpnzaiwFXS9tYvBR.woff2') format('woff2');
-    }
-    @font-face {
-      font-family: 'Newsreader';
-      font-style: normal;
-      font-weight: 300 700;
-      font-display: swap;
-      src: url('https://fonts.gstatic.com/s/newsreader/v21/cY9qfjOCX1hbuyalUrK439vogpTN9A.woff2') format('woff2');
-    }
-    @font-face {
-      font-family: 'Space Mono';
-      font-style: normal;
-      font-weight: 400;
-      font-display: swap;
-      src: url('https://fonts.gstatic.com/s/spacemono/v14/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2') format('woff2');
-    }
-
-    /* ── Base ── */
-    html { scroll-behavior: smooth; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-sans);
-      font-size: 16px;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-    }
-    a { color: var(--accent); text-decoration: none; transition: color .2s; }
-    a:hover { color: var(--accent-strong); }
-
-    /* ── Layout ── */
-    .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
-    section { padding: var(--section-gap) 0; }
-
-    /* ── Nav ── */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(23, 26, 25, 0.85);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--outline);
-      transition: background .3s;
-    }
-    .nav-inner {
-      max-width: var(--max-w); margin: 0 auto; padding: 0 24px;
-      display: flex; align-items: center; justify-content: space-between;
-      height: 64px;
-    }
-    .nav-brand { display: flex; align-items: center; gap: 12px; }
-    .nav-brand img { width: 32px; height: 32px; }
-    .nav-brand span {
-      font-family: var(--font-mono); font-size: 15px; letter-spacing: 0.02em;
-      color: var(--text); font-weight: 400;
-    }
-    .nav-links { display: flex; align-items: center; gap: 28px; }
-    .nav-links a {
-      font-size: 14px; color: var(--muted); font-weight: 500;
-      transition: color .2s;
-    }
-    .nav-links a:hover { color: var(--text); }
-    .nav-cta {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 18px; border-radius: 999px;
-      background: var(--accent); color: var(--on-accent);
-      font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
-      transition: background .2s, transform .15s;
-    }
-    .nav-cta:hover { background: var(--accent-strong); color: var(--on-accent); transform: translateY(-1px); }
-
-    /* ── Hero ── */
-    .hero {
-      min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      text-align: center; position: relative; padding-top: 80px;
-    }
-    .hero-content { max-width: 720px; }
-    .hero-tag {
-      display: inline-block;
-      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
-      color: var(--accent); padding: 6px 16px;
-      border: 1px solid var(--outline); border-radius: 999px;
-      margin-bottom: 32px;
-    }
-    .hero h1 {
-      font-family: var(--font-serif); font-weight: 400; font-size: clamp(40px, 6vw, 72px);
-      line-height: 1.1; color: var(--text); margin-bottom: 24px;
-    }
-    .hero h1 em {
-      font-style: italic; color: var(--accent);
-    }
-    .hero p {
-      font-size: 18px; color: var(--muted); line-height: 1.7; max-width: 540px; margin: 0 auto 40px;
-    }
-    .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 14px 32px; border-radius: 999px;
-      background: var(--accent); color: var(--on-accent);
-      font-size: 15px; font-weight: 600; letter-spacing: 0.01em;
-      transition: background .2s, transform .15s, box-shadow .2s;
-      border: none; cursor: pointer;
-    }
-    .btn-primary:hover { background: var(--accent-strong); color: var(--on-accent); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(169,195,173,0.15); }
-    .btn-secondary {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 14px 32px; border-radius: 999px;
-      background: transparent; color: var(--text);
-      font-size: 15px; font-weight: 500;
-      border: 1px solid var(--outline);
-      transition: border-color .2s, background .2s;
-      cursor: pointer;
-    }
-    .btn-secondary:hover { border-color: var(--muted); background: var(--high); }
-
-    /* ── Platforms pill ── */
-    .platforms {
-      display: flex; gap: 12px; justify-content: center; align-items: center;
-      margin-top: 24px;
-      font-family: var(--font-mono); font-size: 12px; color: var(--muted);
-      letter-spacing: 0.04em;
-    }
-    .platforms svg { width: 16px; height: 16px; fill: var(--muted); }
-
-    /* ── Floating glow behind hero ── */
-    .hero-glow {
-      position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(169,195,173,0.06) 0%, transparent 70%);
-      pointer-events: none; z-index: -1;
-    }
-
-    /* ── Section headings ── */
-    .section-label {
-      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
-      color: var(--accent); margin-bottom: 16px;
-    }
-    .section-title {
-      font-family: var(--font-serif); font-weight: 400; font-size: clamp(28px, 4vw, 42px);
-      line-height: 1.2; color: var(--text); margin-bottom: 16px;
-    }
-    .section-subtitle {
-      font-size: 17px; color: var(--muted); line-height: 1.7; max-width: 560px;
-    }
-    .section-header { margin-bottom: 64px; }
-
-    /* ── Features grid ── */
-    .features-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
-    }
-    .feature-card {
-      background: var(--low); border: 1px solid var(--outline); border-radius: var(--radius);
-      padding: 36px 28px; transition: border-color .25s, transform .2s;
-    }
-    .feature-card:hover { border-color: var(--accent); transform: translateY(-4px); }
-    .feature-icon {
-      width: 44px; height: 44px; border-radius: var(--radius-sm);
-      background: var(--high); display: flex; align-items: center; justify-content: center;
-      margin-bottom: 20px;
-    }
-    .feature-icon svg { width: 22px; height: 22px; stroke: var(--accent); fill: none; stroke-width: 1.5; }
-    .feature-card h3 {
-      font-family: var(--font-sans); font-weight: 600; font-size: 16px;
-      color: var(--text); margin-bottom: 10px;
-    }
-    .feature-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
-
-    /* ── Principles / bento ── */
-    .principles-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
-    }
-    .principle-card {
-      background: var(--low); border: 1px solid var(--outline); border-radius: var(--radius);
-      padding: 44px 36px; position: relative; overflow: hidden;
-    }
-    .principle-card::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
-      background: var(--accent); opacity: 0; transition: opacity .25s;
-    }
-    .principle-card:hover::before { opacity: 1; }
-    .principle-number {
-      font-family: var(--font-mono); font-size: 12px; color: var(--accent);
-      letter-spacing: 0.1em; margin-bottom: 16px;
-    }
-    .principle-card h3 {
-      font-family: var(--font-serif); font-weight: 400; font-size: 22px;
-      color: var(--text); margin-bottom: 12px;
-    }
-    .principle-card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
-
-    /* ── Keyboard shortcuts showcase ── */
-    .shortcuts-section { background: var(--lowest); border-top: 1px solid var(--outline); border-bottom: 1px solid var(--outline); }
-    .shortcuts-layout { display: flex; gap: 64px; align-items: center; }
-    .shortcuts-info { flex: 1; }
-    .shortcuts-list { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .shortcut-item {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 16px; background: var(--low); border-radius: var(--radius-sm);
-      border: 1px solid var(--outline);
-    }
-    .shortcut-key {
-      display: inline-flex; align-items: center; justify-content: center;
-      min-width: 36px; padding: 4px 10px;
-      background: var(--high); border: 1px solid var(--outline); border-radius: 6px;
-      font-family: var(--font-mono); font-size: 12px; color: var(--accent);
-      white-space: nowrap;
-    }
-    .shortcut-label { font-size: 13px; color: var(--muted); }
-
-    /* ── Formats strip ── */
-    .formats-section { text-align: center; }
-    .formats-strip {
-      display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
-      margin-top: 40px;
-    }
-    .format-tag {
-      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em;
-      color: var(--muted); padding: 8px 18px;
-      background: var(--low); border: 1px solid var(--outline); border-radius: 999px;
-      transition: border-color .2s, color .2s;
-    }
-    .format-tag:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* ── CTA Section ── */
-    .cta-section { text-align: center; }
-    .cta-card {
-      background: var(--low); border: 1px solid var(--outline); border-radius: 20px;
-      padding: 80px 48px; position: relative; overflow: hidden;
-    }
-    .cta-card::before {
-      content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(169,195,173,0.08) 0%, transparent 70%);
+    .glow-hover::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: radial-gradient(350px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(169, 195, 173, 0.15), transparent 40%);
       pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
-    .cta-card h2 {
-      font-family: var(--font-serif); font-weight: 400; font-size: clamp(28px, 4vw, 42px);
-      line-height: 1.2; color: var(--text); margin-bottom: 16px; position: relative;
-    }
-    .cta-card p {
-      font-size: 17px; color: var(--muted); max-width: 480px; margin: 0 auto 40px;
-      line-height: 1.7; position: relative;
-    }
-    .cta-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; }
-
-    /* ── Footer ── */
-    footer {
-      border-top: 1px solid var(--outline); padding: 40px 0;
-    }
-    .footer-inner {
-      max-width: var(--max-w); margin: 0 auto; padding: 0 24px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .footer-brand { display: flex; align-items: center; gap: 10px; }
-    .footer-brand img { width: 24px; height: 24px; }
-    .footer-brand span { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
-    .footer-links { display: flex; gap: 24px; }
-    .footer-links a { font-size: 13px; color: var(--muted); }
-    .footer-links a:hover { color: var(--text); }
-
-    /* ── Scroll reveal ── */
-    .reveal {
-      opacity: 0; transform: translateY(24px);
-      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-    }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-
-    /* ── Responsive ── */
-    @media (max-width: 900px) {
-      .features-grid { grid-template-columns: repeat(2, 1fr); }
-      .shortcuts-layout { flex-direction: column; gap: 40px; }
-      .principles-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 600px) {
-      :root { --section-gap: 80px; }
-      .features-grid { grid-template-columns: 1fr; }
-      .shortcuts-list { grid-template-columns: 1fr; }
-      .nav-links a:not(.nav-cta) { display: none; }
-      .hero h1 { font-size: 36px; }
-      .cta-card { padding: 48px 24px; }
-    }
-
-    /* ── Reduced motion ── */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
-      html { scroll-behavior: auto; }
-      .reveal { opacity: 1; transform: none; }
+    .glow-hover:hover::after {
+      opacity: 1;
     }
   </style>
 </head>
-<body>
+<body class="bg-surface-base text-text-primary antialiased selection:bg-primary-container selection:text-surface-base min-h-screen flex flex-col font-body-md text-body-md relative overflow-x-hidden">
 
-  <!-- ── Nav ── -->
-  <nav>
-    <div class="nav-inner">
-      <a href="#" class="nav-brand">
-        <img src="assets/brand/relayn-symbol-sage.svg" alt="" width="32" height="32"/>
-        <span>RelayN</span>
+  <!-- Interactive HUD Toast for Web Actions / Keyboard shortcuts -->
+  <div id="hud-toast" class="fixed top-20 right-6 z-50 pointer-events-none transition-all duration-300 opacity-0 translate-y-[-8px] flex items-center gap-2.5 px-4 py-2 rounded-lg bg-surface-card/95 border border-primary/30 text-text-primary shadow-2xl backdrop-blur-md">
+    <span class="w-2 h-2 rounded-full bg-accent-sage-vibrant animate-ping"></span>
+    <span id="hud-toast-text" class="font-label-mono-sm text-label-mono-sm text-primary">Play/Pause Triggered</span>
+  </div>
+
+  <!-- ==================== TOP NAVIGATION ==================== -->
+  <header class="sticky top-0 w-full z-50 bg-surface-base/80 backdrop-blur-md border-b border-surface-border-subtle">
+    <div class="flex justify-between items-center max-w-[1120px] mx-auto px-margin md:px-margin-desktop py-space-sm w-full">
+      <!-- Brand Logo -->
+      <a class="flex items-center gap-space-xs group" href="#">
+        <div class="w-7 h-7 rounded-lg bg-surface-card border border-surface-border flex items-center justify-center p-1 group-hover:border-primary-container transition-colors duration-200">
+          <img src="assets/brand/relayn-symbol-sage.svg" alt="" class="w-full h-full object-contain" width="24" height="24"/>
+        </div>
+        <span class="font-headline-sm text-headline-sm text-text-primary font-medium tracking-tight">RelayN</span>
+        <span class="hidden sm:inline-block font-label-mono-sm text-[10px] tracking-widest uppercase text-accent-sage-vibrant px-1.5 py-0.5 rounded bg-surface-elevated border border-surface-border-subtle">v0.1.0</span>
       </a>
-      <div class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#formats">Formats</a>
-        <a href="#principles">Philosophy</a>
-        <a href="#download" class="nav-cta">Download</a>
-      </div>
-    </div>
-  </nav>
 
-  <!-- ── Hero ── -->
-  <section class="hero">
-    <div class="hero-glow"></div>
-    <div class="hero-content reveal">
-      <span class="hero-tag">Universal Local Media Player</span>
-      <h1>Your media.<br/><em>In motion.</em></h1>
-      <p>RelayN Player brings your local audio and video into one focused playback experience — with practical controls, universal codec support, and a calm interface designed for everyday use.</p>
-      <div class="hero-actions">
-        <a href="#download" class="btn-primary">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download for Free
+      <!-- Navigation Links -->
+      <nav class="hidden md:flex items-center gap-space-lg">
+        <a class="text-text-muted hover:text-text-secondary transition-colors duration-150 font-body-sm text-body-sm" href="#features">Capabilities</a>
+        <a class="text-text-muted hover:text-text-secondary transition-colors duration-150 font-body-sm text-body-sm" href="#modes">Dual Modes</a>
+        <a class="text-text-muted hover:text-text-secondary transition-colors duration-150 font-body-sm text-body-sm" href="#benchmarks">Architecture</a>
+        <a class="text-text-muted hover:text-text-secondary transition-colors duration-150 font-body-sm text-body-sm" href="#formats">Formats</a>
+        <a class="text-text-muted hover:text-text-secondary transition-colors duration-150 font-body-sm text-body-sm" href="#philosophy">Philosophy</a>
+        <a class="text-text-primary font-medium font-body-sm text-body-sm" href="#download">Download</a>
+      </nav>
+
+      <!-- Trailing Action Cluster -->
+      <div class="flex items-center gap-space-xs">
+        <a class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-surface-border text-text-secondary hover:text-text-primary hover:border-text-muted transition-colors duration-150 font-body-sm text-body-sm" href="https://github.com/mihirverma7781/relayn.app" rel="noopener noreferrer" target="_blank">
+          <span class="material-symbols-outlined text-[15px]">star</span>
+          <span>GitHub</span>
         </a>
-        <a href="https://github.com/mihirverma7781/relayn.app" class="btn-secondary" target="_blank" rel="noopener">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-          View Source
+        <a class="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-accent-sage-soft text-surface-base font-body-sm text-body-sm font-semibold hover:bg-accent-sage-highlight transition-all duration-200 active:scale-95 shadow-sm" href="#download">
+          <span>Download</span>
         </a>
       </div>
-      <div class="platforms">
-        <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83"/><path d="M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
-        <span>macOS &amp; Windows</span>
-      </div>
     </div>
-  </section>
+  </header>
 
-  <!-- ── Features ── -->
-  <section id="features">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-label">Capabilities</p>
-        <h2 class="section-title">Everything you need,<br/>nothing you don't.</h2>
-        <p class="section-subtitle">Built for people who value their media, their privacy, and their time.</p>
-      </div>
-      <div class="features-grid">
-        <div class="feature-card reveal">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          </div>
-          <h3>Universal Playback</h3>
-          <p>Plays virtually every audio and video format out of the box. MP4, MKV, FLAC, OGG, AVI, MOV, WebM, WAV, and hundreds more — no codec packs needed.</p>
-        </div>
-        <div class="feature-card reveal">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          </div>
-          <h3>Local-First &amp; Private</h3>
-          <p>No accounts, no cloud uploads, no telemetry. Your files stay on your device. RelayN never phones home — your media library is yours alone.</p>
-        </div>
-        <div class="feature-card reveal">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          </div>
-          <h3>Precise Controls</h3>
-          <p>Playback speed, audio track selection, subtitle management, seek precision, repeat and shuffle — practical controls at your fingertips.</p>
-        </div>
-        <div class="feature-card reveal">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          </div>
-          <h3>Native Performance</h3>
-          <p>Built with Tauri and libVLC for true native video surfaces and hardware-accelerated decoding. Lightweight, fast, and responsive on both Intel and Apple Silicon.</p>
-        </div>
-        <div class="feature-card reveal">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-          </div>
-          <h3>Audio &amp; Video Equal</h3>
-          <p>Not a music player with video bolted on. Both audio and video are first-class — with dedicated interfaces, metadata display, and artwork presentation.</p>
-        </div>
-        <div class="feature-card reveal">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          </div>
-          <h3>Calm Interface</h3>
-          <p>Modern editorial design with a restrained character. Your media is the hero — the interface stays out of the way while keeping everything discoverable.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
+  <main class="flex-grow w-full relative">
 
-  <!-- ── Keyboard shortcuts ── -->
-  <section class="shortcuts-section" id="shortcuts">
-    <div class="container">
-      <div class="shortcuts-layout">
-        <div class="shortcuts-info reveal">
-          <p class="section-label">Keyboard-Driven</p>
-          <h2 class="section-title">Designed for<br/>your workflow.</h2>
-          <p class="section-subtitle">Every action is within reach. Navigate, play, and control without leaving the keyboard.</p>
-        </div>
-        <div class="shortcuts-list reveal">
-          <div class="shortcut-item">
-            <span class="shortcut-key">Space</span>
-            <span class="shortcut-label">Play / Pause</span>
-          </div>
-          <div class="shortcut-item">
-            <span class="shortcut-key">← →</span>
-            <span class="shortcut-label">Seek ±5s</span>
-          </div>
-          <div class="shortcut-item">
-            <span class="shortcut-key">↑ ↓</span>
-            <span class="shortcut-label">Volume</span>
-          </div>
-          <div class="shortcut-item">
-            <span class="shortcut-key">F</span>
-            <span class="shortcut-label">Fullscreen</span>
-          </div>
-          <div class="shortcut-item">
-            <span class="shortcut-key">M</span>
-            <span class="shortcut-label">Mute</span>
-          </div>
-          <div class="shortcut-item">
-            <span class="shortcut-key">⌘ O</span>
-            <span class="shortcut-label">Open File</span>
-          </div>
-          <div class="shortcut-item">
-            <span class="shortcut-key">L</span>
-            <span class="shortcut-label">Loop Mode</span>
-          </div>
-          <div class="shortcut-item">
-            <span class="shortcut-key">⌘ ,</span>
-            <span class="shortcut-label">Settings</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+    <!-- ==================== HERO SECTION ==================== -->
+    <section class="max-w-[1120px] mx-auto px-margin md:px-margin-desktop pt-space-xl pb-space-2xl text-center flex flex-col items-center relative" id="hero-section">
+      <!-- Ambient Glowing Radial Lights in Background -->
+      <div class="absolute top-12 left-1/2 -translate-x-1/2 w-[720px] h-[340px] bg-accent-sage-soft/10 rounded-full blur-[110px] pointer-events-none animate-float-slow"></div>
+      <div class="absolute top-48 left-1/3 w-[420px] h-[280px] bg-secondary-container/20 rounded-full blur-[90px] pointer-events-none animate-float-reverse"></div>
 
-  <!-- ── Formats ── -->
-  <section class="formats-section" id="formats">
-    <div class="container reveal">
-      <p class="section-label">Format Support</p>
-      <h2 class="section-title">Plays everything you throw at it.</h2>
-      <p class="section-subtitle" style="margin: 0 auto;">Powered by libVLC — hundreds of codecs, containers, and protocols supported natively.</p>
-      <div class="formats-strip">
-        <span class="format-tag">MP4</span>
-        <span class="format-tag">MKV</span>
-        <span class="format-tag">AVI</span>
-        <span class="format-tag">MOV</span>
-        <span class="format-tag">WebM</span>
-        <span class="format-tag">FLAC</span>
-        <span class="format-tag">MP3</span>
-        <span class="format-tag">OGG</span>
-        <span class="format-tag">WAV</span>
-        <span class="format-tag">AAC</span>
-        <span class="format-tag">WMA</span>
-        <span class="format-tag">OPUS</span>
-        <span class="format-tag">H.264</span>
-        <span class="format-tag">H.265</span>
-        <span class="format-tag">VP9</span>
-        <span class="format-tag">MPEG-TS</span>
-        <span class="format-tag">M4A</span>
-        <span class="format-tag">3GP</span>
-        <span class="format-tag">FLV</span>
-        <span class="format-tag">WMV</span>
+      <!-- Eyebrow Tag -->
+      <div class="hero-badge inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-surface-border-subtle bg-surface-card mb-space-lg shadow-sm hover:border-accent-sage-vibrant/40 transition-colors duration-200">
+        <span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant animate-pulse"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-text-secondary uppercase">Universal Local Media Player</span>
       </div>
-    </div>
-  </section>
 
-  <!-- ── Principles ── -->
-  <section id="principles">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-label">Philosophy</p>
-        <h2 class="section-title">Built on principles.</h2>
-      </div>
-      <div class="principles-grid">
-        <div class="principle-card reveal">
-          <p class="principle-number">01</p>
-          <h3>The media is the hero</h3>
-          <p>Chrome, controls, and decoration never compete with your content. The interface recedes so your music and movies take center stage.</p>
-        </div>
-        <div class="principle-card reveal">
-          <p class="principle-number">02</p>
-          <h3>Local-first by default</h3>
-          <p>No cloud library, no streaming catalog, no account requirement. Your files, your device, your control — that's the entire premise.</p>
-        </div>
-        <div class="principle-card reveal">
-          <p class="principle-number">03</p>
-          <h3>Power without clutter</h3>
-          <p>Common playback actions are within easy reach. Advanced actions live in clear menus and contextual controls. Nothing is hidden, nothing screams for attention.</p>
-        </div>
-        <div class="principle-card reveal">
-          <p class="principle-number">04</p>
-          <h3>Be honest</h3>
-          <p>No invented features, no inflated performance claims, no misleading privacy guarantees. What you see is what you get — dependable and straightforward.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+      <!-- Main Title -->
+      <h1 class="hero-title font-display text-display md:text-display text-text-primary tracking-tight max-w-2xl mx-auto mb-space-md relative z-10">
+        Your media. <br/>
+        <span class="italic text-primary font-light">In motion.</span>
+      </h1>
 
-  <!-- ── CTA ── -->
-  <section class="cta-section" id="download">
-    <div class="container">
-      <div class="cta-card reveal">
-        <h2>Ready to experience<br/>your media differently?</h2>
-        <p>Download RelayN Player for free. Open source, no account required, no strings attached.</p>
-        <div class="cta-actions">
-          <a href="https://github.com/mihirverma7781/relayn.app/releases" class="btn-primary" target="_blank" rel="noopener">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download Latest Release
-          </a>
-          <a href="https://github.com/mihirverma7781/relayn.app" class="btn-secondary" target="_blank" rel="noopener">
-            View on GitHub
-          </a>
+      <!-- Body Lead Paragraph -->
+      <p class="hero-lead font-body-lg text-body-lg text-text-secondary max-w-2xl mx-auto leading-relaxed mb-space-lg font-light relative z-10">
+        RelayN Player brings your local audio and video into one focused playback experience — with practical controls, universal codec support, and a calm interface designed for everyday use.
+      </p>
+
+      <!-- CTA Cluster -->
+      <div class="hero-cta-group flex flex-wrap items-center justify-center gap-space-sm mb-space-md relative z-10">
+        <a class="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-accent-sage-soft text-surface-base font-body-md text-body-md font-semibold hover:bg-accent-sage-highlight transition-all duration-200 active:scale-95 shadow-[0_0_24px_rgba(169,195,173,0.25)]" href="#download">
+          <span class="material-symbols-outlined text-[18px]">download</span>
+          <span>Download for Free</span>
+        </a>
+        <a class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-surface-border bg-surface-card/40 text-text-primary hover:bg-surface-elevated hover:border-surface-border-subtle transition-all duration-200 font-body-md text-body-md" href="https://github.com/mihirverma7781/relayn.app" rel="noopener noreferrer" target="_blank">
+          <span class="material-symbols-outlined text-[18px]">code</span>
+          <span>View Source</span>
+        </a>
+      </div>
+
+      <!-- OS Availability Badge & Interactive Tip -->
+      <div class="hero-os-info flex flex-wrap items-center justify-center gap-4 text-text-muted font-label-mono-sm text-label-mono-sm relative z-10">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[14px]">laptop_mac</span>
+          <span>macOS &amp; Windows</span>
+        </div>
+        <span class="hidden sm:inline-block text-surface-border">•</span>
+        <div class="flex items-center gap-1.5 text-accent-sage-soft">
+          <span class="material-symbols-outlined text-[14px]">keyboard</span>
+          <span>Tip: Press <kbd class="px-1.5 py-0.5 rounded bg-kbd-background border border-kbd-border text-[10px] text-primary">Space</kbd> or <kbd class="px-1.5 py-0.5 rounded bg-kbd-background border border-kbd-border text-[10px] text-primary">M</kbd></span>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- ── Footer ── -->
-  <footer>
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <img src="assets/brand/relayn-symbol-sage.svg" alt="" width="24" height="24"/>
-        <span>RelayN Player &copy; 2026</span>
+      <!-- ==================== APP PREVIEW MOCKUP ==================== -->
+      <div class="hero-mockup w-full mt-space-2xl relative rounded-xl p-1 bg-gradient-to-b from-surface-border-subtle to-transparent shadow-[0_24px_70px_-15px_rgba(0,0,0,0.85)] group/mockup" id="mockup-container">
+        <div class="bg-surface-card rounded-xl border border-surface-border-subtle overflow-hidden relative">
+          <!-- Native Window Top Bar -->
+          <div class="h-10 bg-surface-base/90 border-b border-surface-border-subtle px-4 flex items-center justify-between select-none">
+            <!-- macOS Traffic Lights -->
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-[#FF5F57] opacity-80 hover:opacity-100 cursor-pointer"></span>
+              <span class="w-3 h-3 rounded-full bg-[#FEBC2E] opacity-80 hover:opacity-100 cursor-pointer"></span>
+              <span class="w-3 h-3 rounded-full bg-[#28C840] opacity-80 hover:opacity-100 cursor-pointer"></span>
+            </div>
+            <!-- Window Title -->
+            <div class="text-text-muted font-label-mono-sm text-label-mono-sm tracking-wider flex items-center gap-2">
+              <span class="material-symbols-outlined text-[13px] text-primary">movie</span>
+              <span>RelayN Player — Solar_Symphony_Master_4K.mkv</span>
+            </div>
+            <!-- Auxiliary Window Indicators -->
+            <div class="flex items-center gap-3 text-text-muted">
+              <span class="font-label-mono-sm text-label-mono-sm px-1.5 py-0.5 rounded bg-surface-container border border-surface-border text-primary font-mono">libVLC 3.0</span>
+              <span class="material-symbols-outlined text-[16px] hover:text-text-primary cursor-pointer transition-colors" onclick="triggerHudToast('Subtitles: English (SDH) Active')">subtitles</span>
+            </div>
+          </div>
+
+          <!-- Video Playback Surface Mockup -->
+          <div class="relative aspect-video w-full bg-[#0a0c0b] overflow-hidden flex items-center justify-center group">
+            <!-- High Definition Cinematic Canvas -->
+            <img class="w-full h-full object-cover opacity-85 transition-opacity duration-500 group-hover:opacity-95" src="assets/preview.jpg" alt="Botanical greenhouse twilight cinematic view"/>
+
+            <!-- Floating Audio Indicator Pill with Real-time Pulse -->
+            <div class="absolute top-4 left-4 flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-surface-base/85 backdrop-blur-md border border-surface-border-subtle text-text-primary text-xs font-mono shadow-md hover:border-primary/40 transition-all">
+              <span class="w-2 h-2 rounded-full bg-accent-sage-vibrant animate-pulse"></span>
+              <span class="text-text-primary">DTS-HD Master 7.1</span>
+              <span class="text-text-muted">•</span>
+              <span class="text-text-secondary">4K HDR 60fps</span>
+              <!-- Mini live visualizer equalizer -->
+              <div class="flex items-end gap-0.5 h-3 ml-1" id="mockup-equalizer">
+                <span class="w-0.5 bg-accent-sage-vibrant animate-wave-1 rounded-full"></span>
+                <span class="w-0.5 bg-accent-sage-vibrant animate-wave-2 rounded-full"></span>
+                <span class="w-0.5 bg-accent-sage-vibrant animate-wave-3 rounded-full"></span>
+                <span class="w-0.5 bg-accent-sage-vibrant animate-wave-4 rounded-full"></span>
+                <span class="w-0.5 bg-accent-sage-vibrant animate-wave-5 rounded-full"></span>
+              </div>
+            </div>
+
+            <!-- Central Minimalist Interactive Play/Pause Glow Button -->
+            <button id="hero-play-center" class="absolute inset-0 m-auto w-16 h-16 rounded-full bg-surface-base/70 backdrop-blur-md border border-surface-border flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 active:scale-95 shadow-xl" onclick="togglePlaybackState()">
+              <span id="hero-center-icon" class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">pause</span>
+            </button>
+
+            <!-- Floating Minimalist HUD Player Controls Dock -->
+            <div class="absolute bottom-4 inset-x-4 md:inset-x-8 bg-surface-base/85 backdrop-blur-md border border-surface-border-subtle rounded-xl p-3 md:p-4 flex flex-col gap-2 shadow-2xl transition-transform duration-300">
+              <!-- Scrubber Bar -->
+              <div class="w-full flex items-center gap-3">
+                <span id="playback-current-time" class="font-label-mono-sm text-label-mono-sm text-text-muted">01:24:18</span>
+                <div id="scrubber-track" class="relative flex-grow h-1.5 bg-surface-container rounded-full overflow-hidden cursor-pointer group/bar" onclick="seekRandomProgress(event)">
+                  <div id="scrubber-progress" class="absolute top-0 left-0 bottom-0 w-[62%] bg-accent-sage-soft rounded-full group-hover/bar:bg-accent-sage-highlight transition-all duration-300"></div>
+                  <!-- Chapter marker pips -->
+                  <div class="absolute top-0 left-[25%] bottom-0 w-[2px] bg-surface-base/70"></div>
+                  <div class="absolute top-0 left-[50%] bottom-0 w-[2px] bg-surface-base/70"></div>
+                  <div class="absolute top-0 left-[75%] bottom-0 w-[2px] bg-surface-base/70"></div>
+                </div>
+                <span class="font-label-mono-sm text-label-mono-sm text-text-secondary">02:15:00</span>
+              </div>
+
+              <!-- Control Cluster Buttons -->
+              <div class="flex items-center justify-between pt-1">
+                <div class="flex items-center gap-3 text-text-secondary">
+                  <button class="hover:text-text-primary transition-colors duration-150 active:scale-90" onclick="triggerHudToast('Seek -10s')">
+                    <span class="material-symbols-outlined text-[20px]">skip_previous</span>
+                  </button>
+                  <button id="hero-play-dock" class="w-8 h-8 rounded-full bg-accent-sage-soft text-surface-base flex items-center justify-center hover:bg-accent-sage-highlight transition-transform active:scale-95" onclick="togglePlaybackState()">
+                    <span id="hero-dock-icon" class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">pause</span>
+                  </button>
+                  <button class="hover:text-text-primary transition-colors duration-150 active:scale-90" onclick="triggerHudToast('Seek +10s')">
+                    <span class="material-symbols-outlined text-[20px]">skip_next</span>
+                  </button>
+                  <div class="h-4 w-px bg-surface-border ml-1"></div>
+                  <div class="flex items-center gap-1.5 text-text-muted cursor-pointer hover:text-text-secondary transition-colors" onclick="toggleMuteState()">
+                    <span id="volume-icon" class="material-symbols-outlined text-[18px]">volume_up</span>
+                    <div class="w-16 h-1 bg-surface-container rounded-full overflow-hidden">
+                      <div id="volume-slider-bar" class="w-3/4 h-full bg-text-secondary rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 text-text-muted">
+                  <button id="speed-chip" class="font-label-mono-sm text-label-mono-sm hover:text-text-primary cursor-pointer border border-surface-border rounded px-1.5 py-0.5 hover:border-primary transition-colors" onclick="cyclePlaybackSpeed()">1.0x</button>
+                  <button class="hover:text-text-primary transition-colors" onclick="triggerHudToast('Subtitles: English SDH')">
+                    <span class="material-symbols-outlined text-[18px]">closed_caption</span>
+                  </button>
+                  <button class="hover:text-text-primary transition-colors" onclick="triggerHudToast('Loop mode toggled')">
+                    <span class="material-symbols-outlined text-[18px]">repeat</span>
+                  </button>
+                  <button class="hover:text-text-primary transition-colors" onclick="triggerHudToast('Fullscreen Toggled')">
+                    <span class="material-symbols-outlined text-[18px]">fullscreen</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="footer-links">
-        <a href="https://github.com/mihirverma7781/relayn.app" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://github.com/mihirverma7781/relayn.app/releases" target="_blank" rel="noopener">Releases</a>
-        <a href="https://github.com/mihirverma7781/relayn.app/blob/main/README.md" target="_blank" rel="noopener">Docs</a>
+    </section>
+
+    <!-- ==================== CAPABILITIES SECTION ==================== -->
+    <section class="max-w-[1120px] mx-auto px-margin md:px-margin-desktop py-space-2xl border-t border-surface-border-subtle" id="features">
+      <div class="mb-space-xl section-header">
+        <span class="font-label-mono-sm text-label-mono-sm text-accent-sage-vibrant uppercase tracking-wider block mb-space-2xs">Capabilities</span>
+        <h2 class="font-headline-lg text-headline-lg text-text-primary max-w-xl">
+          Everything you need,<br/>nothing you don't.
+        </h2>
+        <p class="font-body-lg text-body-lg text-text-secondary mt-space-xs font-light">
+          Built for people who value their media, their privacy, and their time.
+        </p>
+      </div>
+
+      <!-- 2x3 Calm Refined Grid with GSAP Stagger Reveal -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-lg features-grid">
+        <!-- Card 1 -->
+        <div class="feature-card glow-hover p-7 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border hover:bg-surface-elevated transition-all duration-300 flex flex-col justify-between group">
+          <div>
+            <div class="w-9 h-9 rounded-full bg-surface-elevated border border-surface-border flex items-center justify-center text-primary mb-5 group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-[18px]">play_circle</span>
+            </div>
+            <h3 class="font-headline-sm text-headline-sm text-text-primary mb-2">Universal Playback</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light">
+              Plays virtually every audio and video format out of the box. MP4, MKV, FLAC, OGG, AVI, MOV, WebM, WAV, and hundreds more — no codec packs needed.
+            </p>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="feature-card glow-hover p-7 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border hover:bg-surface-elevated transition-all duration-300 flex flex-col justify-between group">
+          <div>
+            <div class="w-9 h-9 rounded-full bg-surface-elevated border border-surface-border flex items-center justify-center text-primary mb-5 group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-[18px]">lock</span>
+            </div>
+            <h3 class="font-headline-sm text-headline-sm text-text-primary mb-2">Local-First &amp; Private</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light">
+              No accounts, no cloud uploads, no telemetry. Your files stay on your device. RelayN never phones home — your media library is yours alone.
+            </p>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="feature-card glow-hover p-7 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border hover:bg-surface-elevated transition-all duration-300 flex flex-col justify-between group">
+          <div>
+            <div class="w-9 h-9 rounded-full bg-surface-elevated border border-surface-border flex items-center justify-center text-primary mb-5 group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-[18px]">tune</span>
+            </div>
+            <h3 class="font-headline-sm text-headline-sm text-text-primary mb-2">Precise Controls</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light">
+              Playback speed, audio track selection, subtitle management, seek precision, repeat and shuffle — practical controls at your fingertips.
+            </p>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="feature-card glow-hover p-7 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border hover:bg-surface-elevated transition-all duration-300 flex flex-col justify-between group">
+          <div>
+            <div class="w-9 h-9 rounded-full bg-surface-elevated border border-surface-border flex items-center justify-center text-primary mb-5 group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-[18px]">bolt</span>
+            </div>
+            <h3 class="font-headline-sm text-headline-sm text-text-primary mb-2">Native Performance</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light">
+              Built with Tauri and libVLC for true native video surfaces and hardware-accelerated decoding. Lightweight, fast, and responsive on both Intel and Apple Silicon.
+            </p>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="feature-card glow-hover p-7 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border hover:bg-surface-elevated transition-all duration-300 flex flex-col justify-between group">
+          <div>
+            <div class="w-9 h-9 rounded-full bg-surface-elevated border border-surface-border flex items-center justify-center text-primary mb-5 group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-[18px]">equalizer</span>
+            </div>
+            <h3 class="font-headline-sm text-headline-sm text-text-primary mb-2">Audio &amp; Video Equal</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light">
+              Not a music player with video bolted on. Both audio and video are first-class — with dedicated interfaces, metadata display, and artwork presentation.
+            </p>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="feature-card glow-hover p-7 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border hover:bg-surface-elevated transition-all duration-300 flex flex-col justify-between group">
+          <div>
+            <div class="w-9 h-9 rounded-full bg-surface-elevated border border-surface-border flex items-center justify-center text-primary mb-5 group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-[18px]">wb_sunny</span>
+            </div>
+            <h3 class="font-headline-sm text-headline-sm text-text-primary mb-2">Calm Interface</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light">
+              Modern editorial design with a restrained character. Your media is the hero — the interface stays out of the way while keeping everything discoverable.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== DUAL MODES SHOWCASE ==================== -->
+    <section class="max-w-[1120px] mx-auto px-margin md:px-margin-desktop py-space-2xl border-t border-surface-border-subtle" id="modes">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-space-xl gap-4 section-header">
+        <div>
+          <span class="font-label-mono-sm text-label-mono-sm text-accent-sage-vibrant uppercase tracking-wider block mb-space-2xs">Dual Personalities</span>
+          <h2 class="font-headline-lg text-headline-lg text-text-primary">
+            Tailored spaces for<br/>film &amp; hi-fi listening.
+          </h2>
+        </div>
+        <!-- Mode Tab Switchers -->
+        <div class="inline-flex p-1 rounded-full bg-surface-card border border-surface-border">
+          <button id="tab-video-mode" class="px-4 py-1.5 rounded-full text-sm font-medium transition-all bg-accent-sage-soft text-surface-base shadow-sm" onclick="switchMediaMode('video')">Cinema Video</button>
+          <button id="tab-audio-mode" class="px-4 py-1.5 rounded-full text-sm font-medium text-text-muted hover:text-text-primary transition-all" onclick="switchMediaMode('audio')">Pure Audio Deck</button>
+        </div>
+      </div>
+
+      <!-- Cinema Video Preview Card Container -->
+      <div id="mode-panel-video" class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg bg-surface-card border border-surface-border rounded-2xl p-6 md:p-8 transition-all duration-300">
+        <div class="lg:col-span-7 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-accent-sage-vibrant font-label-mono-sm text-label-mono-sm uppercase mb-3">
+              <span class="material-symbols-outlined text-[16px]">theaters</span>
+              <span>Cinema Video Engine</span>
+            </div>
+            <h3 class="font-headline-md text-headline-md text-text-primary mb-3">True zero-distraction presentation.</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light mb-6">
+              When video plays, menus dissolve. Subtitles render with pixel-perfect sub-pixel anti-aliasing and customizable offset timing. Switch audio streams seamlessly for multi-language or director commentary tracks.
+            </p>
+            <!-- Feature Pills -->
+            <div class="grid grid-cols-2 gap-3 mb-6">
+              <div class="p-3 rounded-lg bg-surface-elevated border border-surface-border-subtle">
+                <div class="font-mono text-xs text-primary font-bold mb-1">Hardware Decoding</div>
+                <p class="text-xs text-text-muted">Direct NVDEC, VideoToolbox, and VA-API GPU pipelines</p>
+              </div>
+              <div class="p-3 rounded-lg bg-surface-elevated border border-surface-border-subtle">
+                <div class="font-mono text-xs text-primary font-bold mb-1">Color Accuracy</div>
+                <p class="text-xs text-text-muted">BT.2020 wide gamut &amp; HDR10 tone mapping out-of-the-box</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-text-muted font-label-mono-sm text-xs">
+            <span class="w-2 h-2 rounded-full bg-accent-sage-vibrant"></span>
+            <span>Supports ASS/SSA styles, embedded soft-subs &amp; external .srt</span>
+          </div>
+        </div>
+        <div class="lg:col-span-5 rounded-xl bg-surface-base border border-surface-border overflow-hidden relative p-4 flex flex-col justify-between min-h-[260px]">
+          <div class="flex items-center justify-between pb-3 border-b border-surface-border-subtle">
+            <span class="text-xs font-mono text-text-muted">Aspect Ratio</span>
+            <span class="text-xs font-mono text-primary px-2 py-0.5 rounded bg-surface-elevated">2.39:1 Anamorphic</span>
+          </div>
+          <div class="py-6 text-center space-y-2">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-surface-card border border-primary/20 text-accent-sage-vibrant">
+              <span class="material-symbols-outlined text-2xl">hdr_on</span>
+            </div>
+            <div class="text-sm text-text-primary font-medium">10-Bit HDR10 Passthrough</div>
+            <div class="text-xs text-text-muted">Target Display: 1,000 Nits Rec.2100 PQ</div>
+          </div>
+          <div class="p-3 rounded-lg bg-surface-elevated text-xs font-mono text-text-secondary flex justify-between items-center">
+            <span>Audio: 24-bit 96kHz Lossless</span>
+            <span class="text-accent-sage-vibrant">Direct Stream</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pure Audio Deck Preview Card Container (Hidden by default, switched via tab) -->
+      <div id="mode-panel-audio" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-space-lg bg-surface-card border border-surface-border rounded-2xl p-6 md:p-8 transition-all duration-300">
+        <div class="lg:col-span-7 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-accent-sage-vibrant font-label-mono-sm text-label-mono-sm uppercase mb-3">
+              <span class="material-symbols-outlined text-[16px]">graphic_eq</span>
+              <span>Pure Audio Deck</span>
+            </div>
+            <h3 class="font-headline-md text-headline-md text-text-primary mb-3">Audiophile fidelity, stripped of noise.</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light mb-6">
+              Switching to audio opens a serene listening room. High-resolution album art, synchronized timestamped LRC lyrics, and bit-perfect audio streaming to external DACs without OS resampling.
+            </p>
+            <div class="grid grid-cols-2 gap-3 mb-6">
+              <div class="p-3 rounded-lg bg-surface-elevated border border-surface-border-subtle">
+                <div class="font-mono text-xs text-primary font-bold mb-1">Bit-Perfect Passthrough</div>
+                <p class="text-xs text-text-muted">Bypass system audio mixer with exclusive WASAPI &amp; CoreAudio mode</p>
+              </div>
+              <div class="p-3 rounded-lg bg-surface-elevated border border-surface-border-subtle">
+                <div class="font-mono text-xs text-primary font-bold mb-1">LRC Lyrics Sync</div>
+                <p class="text-xs text-text-muted">Smoothly scrolling real-time vocal typography tracking</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-text-muted font-label-mono-sm text-xs">
+            <span class="w-2 h-2 rounded-full bg-accent-sage-vibrant"></span>
+            <span>Gapless playback support across entire FLAC &amp; DSD discographies</span>
+          </div>
+        </div>
+        <div class="lg:col-span-5 rounded-xl bg-surface-base border border-surface-border overflow-hidden relative p-4 flex flex-col justify-between min-h-[260px]">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-surface-elevated border border-surface-border flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-[20px]">music_note</span>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-text-primary">Komorebi Dreams</div>
+              <div class="text-xs text-text-muted">Hiroshi Yoshimura • FLAC 192kHz/24-bit</div>
+            </div>
+          </div>
+          <div class="py-4 space-y-1.5 border-y border-surface-border-subtle my-2">
+            <p class="text-xs text-text-muted italic">"Diffused morning sunlight through the pines..."</p>
+            <p class="text-sm text-accent-sage-highlight font-medium">"Quiet echoes of water droplet cadence"</p>
+            <p class="text-xs text-text-muted italic">"The room remains still as day begins..."</p>
+          </div>
+          <div class="flex items-center justify-between text-xs font-mono text-text-secondary">
+            <span>DAC Output: USB Exclusive</span>
+            <span class="text-primary">192 kHz Fixed</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== ARCHITECTURE & BENCHMARK SECTION ==================== -->
+    <section class="max-w-[1120px] mx-auto px-margin md:px-margin-desktop py-space-2xl border-t border-surface-border-subtle" id="benchmarks">
+      <div class="mb-space-xl section-header">
+        <span class="font-label-mono-sm text-label-mono-sm text-accent-sage-vibrant uppercase tracking-wider block mb-space-2xs">Architecture &amp; Footprint</span>
+        <h2 class="font-headline-lg text-headline-lg text-text-primary max-w-xl">
+          Engineered light.<br/>Fast by conviction.
+        </h2>
+        <p class="font-body-lg text-body-lg text-text-secondary mt-space-xs font-light">
+          RelayN combines Rust native execution, Tauri shell architecture, and libVLC hardware render pipelines. Zero Chromium overhead, zero embedded web engine bloat.
+        </p>
+      </div>
+
+      <!-- Comparison Metric Cards with Animated Fill on Scroll -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-space-md mb-space-lg benchmarks-grid">
+        <!-- Metric 1: Idle RAM -->
+        <div class="benchmark-card p-6 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border transition-all">
+          <div class="text-text-muted font-label-mono-sm text-xs uppercase mb-2">Memory Footprint (Idle)</div>
+          <div class="flex items-baseline gap-2 mb-3">
+            <span class="text-3xl font-mono text-primary font-bold metric-counter" data-target="48">48 MB</span>
+            <span class="text-xs text-accent-sage-vibrant">vs ~380 MB Electron</span>
+          </div>
+          <!-- Visual progress bar comparison -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-[11px] font-mono text-text-muted">
+              <span>RelayN</span>
+              <span class="text-primary font-semibold">48 MB</span>
+            </div>
+            <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+              <div class="h-full bg-accent-sage-soft rounded-full benchmark-bar" data-width="14%" style="width: 0%;"></div>
+            </div>
+            <div class="flex justify-between text-[11px] font-mono text-text-muted pt-1">
+              <span>VLC / Typical Players</span>
+              <span>180 MB</span>
+            </div>
+            <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+              <div class="h-full bg-surface-container-highest rounded-full benchmark-bar" data-width="45%" style="width: 0%;"></div>
+            </div>
+            <div class="flex justify-between text-[11px] font-mono text-text-muted pt-1">
+              <span>Chromium-based Players</span>
+              <span>380 MB+</span>
+            </div>
+            <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+              <div class="h-full bg-surface-container-highest/60 rounded-full benchmark-bar" data-width="95%" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric 2: Startup Time -->
+        <div class="benchmark-card p-6 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border transition-all">
+          <div class="text-text-muted font-label-mono-sm text-xs uppercase mb-2">Cold Startup Latency</div>
+          <div class="flex items-baseline gap-2 mb-3">
+            <span class="text-3xl font-mono text-primary font-bold metric-counter" data-target="120">120 ms</span>
+            <span class="text-xs text-accent-sage-vibrant">Near Instantaneous</span>
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-[11px] font-mono text-text-muted">
+              <span>RelayN</span>
+              <span class="text-primary font-semibold">120 ms</span>
+            </div>
+            <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+              <div class="h-full bg-accent-sage-soft rounded-full benchmark-bar" data-width="8%" style="width: 0%;"></div>
+            </div>
+            <div class="flex justify-between text-[11px] font-mono text-text-muted pt-1">
+              <span>Native Competitors</span>
+              <span>650 ms</span>
+            </div>
+            <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+              <div class="h-full bg-surface-container-highest rounded-full benchmark-bar" data-width="40%" style="width: 0%;"></div>
+            </div>
+            <div class="flex justify-between text-[11px] font-mono text-text-muted pt-1">
+              <span>Electron Apps</span>
+              <span>1,850 ms</span>
+            </div>
+            <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+              <div class="h-full bg-surface-container-highest/60 rounded-full benchmark-bar" data-width="90%" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric 3: Zero Telemetry -->
+        <div class="benchmark-card p-6 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border transition-all">
+          <div class="text-text-muted font-label-mono-sm text-xs uppercase mb-2">Network Transmissions</div>
+          <div class="flex items-baseline gap-2 mb-3">
+            <span class="text-3xl font-mono text-primary font-bold">0 Requests</span>
+            <span class="text-xs text-accent-sage-vibrant">Air-gapped</span>
+          </div>
+          <div class="p-3 rounded-lg bg-surface-elevated border border-surface-border-subtle text-xs text-text-secondary leading-relaxed space-y-1">
+            <div class="flex items-center gap-1.5 text-primary font-mono font-medium">
+              <span class="material-symbols-outlined text-[14px]">verified_user</span>
+              <span>Guaranteed Offline First</span>
+            </div>
+            <p class="text-[12px] text-text-muted font-light">
+              RelayN has no analytics SDKs, no tracking pixels, and no remote update pings unless explicitly requested.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== KEYBOARD-DRIVEN PLAYGROUND SECTION ==================== -->
+    <section class="max-w-[1120px] mx-auto px-margin md:px-margin-desktop py-space-2xl border-t border-surface-border-subtle" id="shortcuts">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center">
+        <!-- Left Editorial Context -->
+        <div class="lg:col-span-5 section-header">
+          <span class="font-label-mono-sm text-label-mono-sm text-accent-sage-vibrant uppercase tracking-wider block mb-space-2xs">Keyboard-Driven</span>
+          <h2 class="font-headline-lg text-headline-lg text-text-primary mb-space-xs">
+            Designed for<br/>your workflow.
+          </h2>
+          <p class="font-body-lg text-body-lg text-text-secondary leading-relaxed font-light mb-4">
+            Every action is within reach. Navigate, play, and control without leaving the keyboard. Click any key below to test in real-time.
+          </p>
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-card border border-surface-border text-xs text-text-muted">
+            <span class="material-symbols-outlined text-[16px] text-accent-sage-vibrant">touch_app</span>
+            <span>Click any shortcut pill to simulate action</span>
+          </div>
+        </div>
+
+        <!-- Right Shortcuts Grid Matrix with GSAP Stagger Reveal -->
+        <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3 shortcuts-grid">
+          <!-- Shortcut 1 -->
+          <div class="shortcut-item cursor-pointer flex items-center justify-between p-3.5 rounded-lg bg-surface-card border border-surface-border-subtle hover:border-accent-sage-vibrant/60 hover:bg-surface-elevated active:scale-95 transition-all" onclick="simulateKey('Space', 'Play / Pause Toggled')">
+            <span class="font-body-sm text-body-sm text-text-secondary">Play / Pause</span>
+            <span class="px-2.5 py-1 rounded bg-kbd-background border border-kbd-border text-primary font-kbd-label text-kbd-label shadow-sm">Space</span>
+          </div>
+          <!-- Shortcut 2 -->
+          <div class="shortcut-item cursor-pointer flex items-center justify-between p-3.5 rounded-lg bg-surface-card border border-surface-border-subtle hover:border-accent-sage-vibrant/60 hover:bg-surface-elevated active:scale-95 transition-all" onclick="simulateKey('ArrowRight', 'Seek +5s Ahead')">
+            <span class="font-body-sm text-body-sm text-text-secondary">Seek ±5s</span>
+            <span class="px-2.5 py-1 rounded bg-kbd-background border border-kbd-border text-primary font-kbd-label text-kbd-label shadow-sm">← →</span>
+          </div>
+          <!-- Shortcut 3 -->
+          <div class="shortcut-item cursor-pointer flex items-center justify-between p-3.5 rounded-lg bg-surface-card border border-surface-border-subtle hover:border-accent-sage-vibrant/60 hover:bg-surface-elevated active:scale-95 transition-all" onclick="simulateKey('ArrowUp', 'Volume: 85%')">
+            <span class="font-body-sm text-body-sm text-text-secondary">Volume</span>
+            <span class="px-2.5 py-1 rounded bg-kbd-background border border-kbd-border text-primary font-kbd-label text-kbd-label shadow-sm">↑ ↓</span>
+          </div>
+          <!-- Shortcut 4 -->
+          <div class="shortcut-item cursor-pointer flex items-center justify-between p-3.5 rounded-lg bg-surface-card border border-surface-border-subtle hover:border-accent-sage-vibrant/60 hover:bg-surface-elevated active:scale-95 transition-all" onclick="simulateKey('KeyF', 'Entered Fullscreen Mode')">
+            <span class="font-body-sm text-body-sm text-text-secondary">Fullscreen</span>
+            <span class="px-2.5 py-1 rounded bg-kbd-background border border-kbd-border text-primary font-kbd-label text-kbd-label shadow-sm">F</span>
+          </div>
+          <!-- Shortcut 5 -->
+          <div class="shortcut-item cursor-pointer flex items-center justify-between p-3.5 rounded-lg bg-surface-card border border-surface-border-subtle hover:border-accent-sage-vibrant/60 hover:bg-surface-elevated active:scale-95 transition-all" onclick="simulateKey('KeyM', 'Mute State Inverted')">
+            <span class="font-body-sm text-body-sm text-text-secondary">Mute</span>
+            <span class="px-2.5 py-1 rounded bg-kbd-background border border-kbd-border text-primary font-kbd-label text-kbd-label shadow-sm">M</span>
+          </div>
+          <!-- Shortcut 6 -->
+          <div class="shortcut-item cursor-pointer flex items-center justify-between p-3.5 rounded-lg bg-surface-card border border-surface-border-subtle hover:border-accent-sage-vibrant/60 hover:bg-surface-elevated active:scale-95 transition-all" onclick="simulateKey('KeyO', 'Opening Local File Browser')">
+            <span class="font-body-sm text-body-sm text-text-secondary">Open File</span>
+            <span class="px-2.5 py-1 rounded bg-kbd-background border border-kbd-border text-primary font-kbd-label text-kbd-label shadow-sm">⌘ O</span>
+          </div>
+          <!-- Shortcut 7 -->
+          <div class="shortcut-item cursor-pointer flex items-center justify-between p-3.5 rounded-lg bg-surface-card border border-surface-border-subtle hover:border-accent-sage-vibrant/60 hover:bg-surface-elevated active:scale-95 transition-all" onclick="simulateKey('KeyL', 'Loop Playlist: On')">
+            <span class="font-body-sm text-body-sm text-text-secondary">Loop Mode</span>
+            <span class="px-2.5 py-1 rounded bg-kbd-background border border-kbd-border text-primary font-kbd-label text-kbd-label shadow-sm">L</span>
+          </div>
+          <!-- Shortcut 8 -->
+          <div class="shortcut-item cursor-pointer flex items-center justify-between p-3.5 rounded-lg bg-surface-card border border-surface-border-subtle hover:border-accent-sage-vibrant/60 hover:bg-surface-elevated active:scale-95 transition-all" onclick="simulateKey('Comma', 'Preferences Drawer Opened')">
+            <span class="font-body-sm text-body-sm text-text-secondary">Settings</span>
+            <span class="px-2.5 py-1 rounded bg-kbd-background border border-kbd-border text-primary font-kbd-label text-kbd-label shadow-sm">⌘ ,</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== FORMAT SUPPORT & LIVE CATEGORY MARQUEE ==================== -->
+    <section class="max-w-[1120px] mx-auto px-margin md:px-margin-desktop py-space-2xl border-t border-surface-border-subtle text-center" id="formats">
+      <div class="max-w-2xl mx-auto mb-space-lg section-header">
+        <span class="font-label-mono-sm text-label-mono-sm text-accent-sage-vibrant uppercase tracking-wider block mb-space-2xs">Format Support</span>
+        <h2 class="font-headline-lg text-headline-lg text-text-primary mb-space-xs">
+          Plays everything you throw at it.
+        </h2>
+        <p class="font-body-lg text-body-lg text-text-secondary font-light mb-6">
+          Powered by libVLC — hundreds of codecs, containers, and protocols supported natively.
+        </p>
+
+        <!-- Interactive Category Filter Tabs -->
+        <div class="inline-flex flex-wrap items-center justify-center gap-2 p-1.5 rounded-full bg-surface-card border border-surface-border mb-6">
+          <button class="codec-tab px-3.5 py-1 rounded-full text-xs font-mono transition-all bg-accent-sage-soft text-surface-base font-semibold" onclick="filterCodecs('all', this)">All (32+)</button>
+          <button class="codec-tab px-3.5 py-1 rounded-full text-xs font-mono text-text-muted hover:text-text-primary transition-all" onclick="filterCodecs('video', this)">Video Containers</button>
+          <button class="codec-tab px-3.5 py-1 rounded-full text-xs font-mono text-text-muted hover:text-text-primary transition-all" onclick="filterCodecs('audio', this)">Lossless Audio</button>
+          <button class="codec-tab px-3.5 py-1 rounded-full text-xs font-mono text-text-muted hover:text-text-primary transition-all" onclick="filterCodecs('subs', this)">Subtitles</button>
+        </div>
+      </div>
+
+      <!-- Format Chips Flex Display with Category Data Attributes -->
+      <div id="codec-container" class="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto mb-space-xl">
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">MP4</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">MKV</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">AVI</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">MOV</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">WebM</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="audio">FLAC</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="audio">MP3</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="audio">OGG</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="audio">WAV</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="audio">AAC</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="audio">WMA</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="audio">OPUS</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">H.264 / AVC</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">H.265 / HEVC</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">AV1</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">VP9</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">MPEG-TS</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="audio">M4A / ALAC</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="audio">DSD (.dsf/.dff)</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="subs">ASS / SSA</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="subs">SRT</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="subs">VTT</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">FLV</span>
+        <span class="codec-chip px-3.5 py-1.5 rounded-full bg-surface-card border border-surface-border-subtle text-primary font-label-mono-sm text-label-mono-sm hover:border-accent-sage-vibrant/60 transition-all hover:scale-105 cursor-default" data-cat="video">WMV</span>
+      </div>
+
+      <!-- Continuous Looping Infinite Marquee Ticker -->
+      <div class="relative w-full overflow-hidden py-3 border-y border-surface-border-subtle bg-surface-container-lowest/50">
+        <div class="animate-marquee whitespace-nowrap gap-8 flex items-center text-xs font-mono text-text-muted">
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> HEVC MAIN 10 4:2:0</span>
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> AV1 12-BIT DECODE</span>
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> DOLBY TRUEHD ATMOS</span>
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> FLAC 24-BIT / 192KHZ</span>
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> APPLE PRORES 422 HQ</span>
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> MATROSKA (.MKV) V4</span>
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> OPUS INTERLEAVED AUDIO</span>
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> HEVC MAIN 10 4:2:0</span>
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> AV1 12-BIT DECODE</span>
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> DOLBY TRUEHD ATMOS</span>
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> FLAC 24-BIT / 192KHZ</span>
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-sage-vibrant"></span> APPLE PRORES 422 HQ</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== PHILOSOPHY SECTION ==================== -->
+    <section class="max-w-[1120px] mx-auto px-margin md:px-margin-desktop py-space-2xl border-t border-surface-border-subtle" id="philosophy">
+      <div class="mb-space-xl section-header">
+        <span class="font-label-mono-sm text-label-mono-sm text-accent-sage-vibrant uppercase tracking-wider block mb-space-2xs">Philosophy</span>
+        <h2 class="font-headline-lg text-headline-lg text-text-primary">
+          Built on principles.
+        </h2>
+      </div>
+
+      <!-- 2x2 Grid with Refined Monospaced Ordinals -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-lg principles-grid">
+        <!-- Principle 01 -->
+        <div class="principle-card glow-hover p-8 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border transition-colors flex flex-col justify-between">
+          <div>
+            <span class="font-label-mono-md text-label-mono-md text-accent-sage-soft/70 block mb-3">01</span>
+            <h3 class="font-headline-sm text-headline-sm text-text-primary mb-3">The media is the hero</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light">
+              Chrome, controls, and decoration never compete with your content. The interface recedes so your music and movies take center stage.
+            </p>
+          </div>
+        </div>
+
+        <!-- Principle 02 -->
+        <div class="principle-card glow-hover p-8 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border transition-colors flex flex-col justify-between">
+          <div>
+            <span class="font-label-mono-md text-label-mono-md text-accent-sage-soft/70 block mb-3">02</span>
+            <h3 class="font-headline-sm text-headline-sm text-text-primary mb-3">Local-first by default</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light">
+              No cloud library, no streaming catalog, no account requirement. Your files, your device, your control — that's the entire premise.
+            </p>
+          </div>
+        </div>
+
+        <!-- Principle 03 -->
+        <div class="principle-card glow-hover p-8 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border transition-colors flex flex-col justify-between">
+          <div>
+            <span class="font-label-mono-md text-label-mono-md text-accent-sage-soft/70 block mb-3">03</span>
+            <h3 class="font-headline-sm text-headline-sm text-text-primary mb-3">Power without clutter</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light">
+              Common playback actions are within easy reach. Advanced actions live in clear menus and contextual controls. Nothing is hidden, nothing screams for attention.
+            </p>
+          </div>
+        </div>
+
+        <!-- Principle 04 -->
+        <div class="principle-card glow-hover p-8 rounded-xl bg-surface-card border border-surface-border-subtle hover:border-surface-border transition-colors flex flex-col justify-between">
+          <div>
+            <span class="font-label-mono-md text-label-mono-md text-accent-sage-soft/70 block mb-3">04</span>
+            <h3 class="font-headline-sm text-headline-sm text-text-primary mb-3">Be honest</h3>
+            <p class="font-body-md text-body-md text-text-secondary leading-relaxed font-light">
+              No invented features, no inflated performance claims, no misleading privacy guarantees. What you see is what you get — dependable and straightforward.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== RELEASE ROADMAP & OPEN SOURCE INTEGRITY ==================== -->
+    <section class="max-w-[1120px] mx-auto px-margin md:px-margin-desktop py-space-2xl border-t border-surface-border-subtle" id="specs">
+      <div class="p-8 md:p-10 rounded-2xl bg-surface-card border border-surface-border relative overflow-hidden">
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+          <div class="max-w-xl">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="px-2 py-0.5 rounded bg-surface-elevated border border-surface-border-subtle text-primary font-mono text-xs">Release v0.1.0</span>
+              <span class="text-xs text-accent-sage-vibrant font-mono font-medium">Stable Channel</span>
+            </div>
+            <h3 class="font-headline-md text-headline-md text-text-primary mb-2">Autonomous and open to the core.</h3>
+            <p class="text-sm text-text-secondary font-light leading-relaxed">
+              RelayN is fully free and open source under GNU GPLv3. Audited for zero network telemetry calls, and built to outlive ephemeral cloud services.
+            </p>
+          </div>
+          <!-- Live Release Badges -->
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="p-3.5 rounded-xl bg-surface-elevated border border-surface-border-subtle min-w-[130px] text-center">
+              <div class="text-[11px] font-mono text-text-muted uppercase">Engine Core</div>
+              <div class="text-base font-mono font-bold text-primary mt-0.5">libVLC 3.0</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-surface-elevated border border-surface-border-subtle min-w-[130px] text-center">
+              <div class="text-[11px] font-mono text-text-muted uppercase">Shell Framework</div>
+              <div class="text-base font-mono font-bold text-accent-sage-soft mt-0.5">Tauri 2.0</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-surface-elevated border border-surface-border-subtle min-w-[130px] text-center">
+              <div class="text-[11px] font-mono text-text-muted uppercase">License</div>
+              <div class="text-base font-mono font-bold text-text-primary mt-0.5">GNU GPLv3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== CALL TO ACTION SECTION ==================== -->
+    <section class="max-w-[1120px] mx-auto px-margin md:px-margin-desktop py-space-2xl" id="download">
+      <div class="rounded-2xl bg-surface-card border border-surface-border p-8 md:p-14 text-center relative overflow-hidden group">
+        <!-- Ambient Subtle Luminous Gradient -->
+        <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 bg-accent-sage-soft/10 rounded-full blur-3xl pointer-events-none group-hover:bg-accent-sage-soft/20 transition-all duration-700"></div>
+
+        <div class="relative z-10 max-w-xl mx-auto">
+          <h2 class="font-headline-lg text-headline-lg text-text-primary mb-space-xs">
+            Ready to experience<br/>your media differently?
+          </h2>
+          <p class="font-body-md text-body-md text-text-secondary mb-space-lg font-light leading-relaxed">
+            Download RelayN Player for free. Open source, no account required, no strings attached.
+          </p>
+
+          <!-- CTAs -->
+          <div class="flex flex-wrap items-center justify-center gap-space-sm mb-6">
+            <a class="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-accent-sage-soft text-surface-base font-body-md text-body-md font-semibold hover:bg-accent-sage-highlight transition-all duration-200 active:scale-95 shadow-sm" href="https://github.com/mihirverma7781/relayn.app/releases" rel="noopener noreferrer" target="_blank">
+              <span class="material-symbols-outlined text-[18px]">download</span>
+              <span>Download Latest Release</span>
+            </a>
+            <a class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-surface-border bg-surface-elevated text-text-primary hover:border-surface-border-subtle transition-all duration-200 font-body-md text-body-md" href="https://github.com/mihirverma7781/relayn.app" rel="noopener noreferrer" target="_blank">
+              <span>View on GitHub</span>
+            </a>
+          </div>
+
+          <!-- macOS Gatekeeper Help Banner -->
+          <div class="p-3.5 rounded-xl bg-surface-elevated/80 border border-surface-border text-left flex items-start gap-3 text-xs text-text-muted">
+            <span class="material-symbols-outlined text-accent-sage-vibrant text-base shrink-0 mt-0.5">info</span>
+            <div class="flex-grow">
+              <span class="text-text-primary font-medium">macOS Apple Silicon (M1/M2/M3):</span> If Gatekeeper shows <em>"App is damaged and can't be opened"</em>, run this once in Terminal to clear the download quarantine:
+              <div class="mt-1.5 flex items-center gap-2">
+                <code class="px-2 py-1 rounded bg-surface-base font-mono text-[11px] text-primary border border-surface-border select-all" id="xattr-cmd">xattr -cr "/Applications/RelayN Player.app"</code>
+                <button class="px-2 py-0.5 rounded bg-surface-card border border-surface-border hover:border-accent-sage-vibrant text-text-primary font-mono text-[10px] transition-colors" onclick="copyXattrCmd(this)">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="docked full-width bottom-0 bg-surface-base border-t border-surface-border-subtle">
+    <div class="flex flex-col md:flex-row justify-between items-center max-w-[1120px] mx-auto px-margin md:px-margin-desktop py-space-lg w-full gap-space-md">
+      <!-- Copyright Label -->
+      <div class="flex items-center gap-2">
+        <img src="assets/brand/relayn-symbol-sage.svg" alt="" width="20" height="20"/>
+        <span class="font-body-sm text-body-sm text-text-muted">RelayN Player © 2026 — Universal Local Playback</span>
+      </div>
+      <!-- Footer Links -->
+      <div class="flex items-center gap-space-lg font-body-sm text-body-sm">
+        <a class="text-text-muted hover:text-text-secondary transition-colors duration-150" href="https://github.com/mihirverma7781/relayn.app" rel="noopener noreferrer" target="_blank">GitHub</a>
+        <a class="text-text-muted hover:text-text-secondary transition-colors duration-150" href="https://github.com/mihirverma7781/relayn.app/releases" rel="noopener noreferrer" target="_blank">Releases</a>
+        <a class="text-text-muted hover:text-text-secondary transition-colors duration-150" href="https://github.com/mihirverma7781/relayn.app/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">License</a>
+        <a class="text-text-muted hover:text-text-secondary transition-colors duration-150" href="https://github.com/mihirverma7781/relayn.app/blob/main/README.md" rel="noopener noreferrer" target="_blank">Docs</a>
       </div>
     </div>
   </footer>
 
-  <!-- ── Scroll reveal ── -->
+  <!-- ==================== GSAP ANIMATIONS & INTERACTIVE SCRIPTS ==================== -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const els = document.querySelectorAll('.reveal');
-      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        const io = new IntersectionObserver((entries) => {
-          entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
-        }, { threshold: 0.15 });
-        els.forEach(el => io.observe(el));
-      } else {
-        els.forEach(el => el.classList.add('visible'));
+    // Copy xattr command
+    function copyXattrCmd(btn) {
+      navigator.clipboard.writeText('xattr -cr "/Applications/RelayN Player.app"').then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      });
+    }
+
+    // HUD Toast Trigger
+    let toastTimeout;
+    function triggerHudToast(message) {
+      const toast = document.getElementById('hud-toast');
+      const toastText = document.getElementById('hud-toast-text');
+      if (!toast || !toastText) return;
+
+      toastText.textContent = message;
+      gsap.killTweensOf(toast);
+      gsap.fromTo(toast, 
+        { opacity: 0, y: -12, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.25, ease: 'power2.out' }
+      );
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        gsap.to(toast, { opacity: 0, y: -8, scale: 0.95, duration: 0.25, ease: 'power2.in' });
+      }, 2200);
+    }
+
+    // Playback Toggle Animation
+    let isPlaying = true;
+    function togglePlaybackState() {
+      isPlaying = !isPlaying;
+      const centerIcon = document.getElementById('hero-center-icon');
+      const dockIcon = document.getElementById('hero-dock-icon');
+      const eqBars = document.querySelectorAll('#mockup-equalizer span');
+      const iconName = isPlaying ? 'pause' : 'play_arrow';
+
+      if (centerIcon) centerIcon.textContent = iconName;
+      if (dockIcon) dockIcon.textContent = iconName;
+
+      eqBars.forEach(bar => {
+        bar.style.animationPlayState = isPlaying ? 'running' : 'paused';
+      });
+
+      triggerHudToast(isPlaying ? 'Playback Resumed' : 'Playback Paused');
+    }
+
+    // Mute Toggle
+    let isMuted = false;
+    function toggleMuteState() {
+      isMuted = !isMuted;
+      const volIcon = document.getElementById('volume-icon');
+      const volBar = document.getElementById('volume-slider-bar');
+      if (volIcon) volIcon.textContent = isMuted ? 'volume_off' : 'volume_up';
+      if (volBar) volBar.style.width = isMuted ? '0%' : '75%';
+      triggerHudToast(isMuted ? 'Audio Muted' : 'Volume Restored (75%)');
+    }
+
+    // Speed Cycle
+    const speeds = ['1.0x', '1.25x', '1.5x', '2.0x', '0.75x'];
+    let speedIndex = 0;
+    function cyclePlaybackSpeed() {
+      speedIndex = (speedIndex + 1) % speeds.length;
+      const chip = document.getElementById('speed-chip');
+      if (chip) chip.textContent = speeds[speedIndex];
+      triggerHudToast('Speed: ' + speeds[speedIndex]);
+    }
+
+    // Scrubber click interaction
+    function seekRandomProgress(e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const percent = Math.round(pos * 100);
+      const bar = document.getElementById('scrubber-progress');
+      if (bar) bar.style.width = percent + '%';
+      const totalSecs = 135 * 60; // 2h 15m
+      const currentSecs = Math.floor(totalSecs * pos);
+      const h = String(Math.floor(currentSecs / 3600)).padStart(2, '0');
+      const m = String(Math.floor((currentSecs % 3600) / 60)).padStart(2, '0');
+      const s = String(currentSecs % 60).padStart(2, '0');
+      const timeDisplay = document.getElementById('playback-current-time');
+      if (timeDisplay) timeDisplay.textContent = `${h}:${m}:${s}`;
+      triggerHudToast(`Seeked to ${h}:${m}:${s} (${percent}%)`);
+    }
+
+    // Keyboard shortcut simulator
+    function simulateKey(code, label) {
+      triggerHudToast(label);
+      if (code === 'Space') togglePlaybackState();
+      if (code === 'KeyM') toggleMuteState();
+    }
+
+    // Global window key listener
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlaybackState();
+      } else if (e.code === 'KeyM') {
+        toggleMuteState();
+      } else if (e.code === 'KeyF') {
+        triggerHudToast('Fullscreen Mode Toggled (F)');
+      } else if (e.code === 'KeyL') {
+        triggerHudToast('Loop Playlist Toggled (L)');
       }
     });
-  </script>
 
+    // Dual Media Mode Switcher with GSAP Crossfade
+    function switchMediaMode(mode) {
+      const videoBtn = document.getElementById('tab-video-mode');
+      const audioBtn = document.getElementById('tab-audio-mode');
+      const videoPanel = document.getElementById('mode-panel-video');
+      const audioPanel = document.getElementById('mode-panel-audio');
+
+      if (mode === 'video') {
+        gsap.to(audioPanel, {
+          opacity: 0,
+          y: 10,
+          duration: 0.2,
+          onComplete: () => {
+            audioPanel.classList.add('hidden');
+            videoPanel.classList.remove('hidden');
+            gsap.fromTo(videoPanel, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' });
+          }
+        });
+        videoBtn.className = 'px-4 py-1.5 rounded-full text-sm font-medium transition-all bg-accent-sage-soft text-surface-base shadow-sm';
+        audioBtn.className = 'px-4 py-1.5 rounded-full text-sm font-medium text-text-muted hover:text-text-primary transition-all';
+        triggerHudToast('Switched to Cinema Video Engine');
+      } else {
+        gsap.to(videoPanel, {
+          opacity: 0,
+          y: 10,
+          duration: 0.2,
+          onComplete: () => {
+            videoPanel.classList.add('hidden');
+            audioPanel.classList.remove('hidden');
+            gsap.fromTo(audioPanel, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' });
+          }
+        });
+        audioBtn.className = 'px-4 py-1.5 rounded-full text-sm font-medium transition-all bg-accent-sage-soft text-surface-base shadow-sm';
+        videoBtn.className = 'px-4 py-1.5 rounded-full text-sm font-medium text-text-muted hover:text-text-primary transition-all';
+        triggerHudToast('Switched to Pure Audio Deck');
+      }
+    }
+
+    // Codec Tab Filter with GSAP Flip Stagger
+    function filterCodecs(category, btnElement) {
+      document.querySelectorAll('.codec-tab').forEach(btn => {
+        btn.className = 'codec-tab px-3.5 py-1 rounded-full text-xs font-mono text-text-muted hover:text-text-primary transition-all';
+      });
+      btnElement.className = 'codec-tab px-3.5 py-1 rounded-full text-xs font-mono transition-all bg-accent-sage-soft text-surface-base font-semibold';
+
+      const chips = document.querySelectorAll('.codec-chip');
+      const matchingChips = [];
+      const nonMatchingChips = [];
+
+      chips.forEach(chip => {
+        if (category === 'all' || chip.getAttribute('data-cat') === category) {
+          matchingChips.push(chip);
+        } else {
+          nonMatchingChips.push(chip);
+        }
+      });
+
+      gsap.to(nonMatchingChips, {
+        scale: 0.8,
+        opacity: 0,
+        duration: 0.2,
+        ease: 'power2.in',
+        onComplete: () => {
+          nonMatchingChips.forEach(c => c.style.display = 'none');
+          matchingChips.forEach(c => c.style.display = 'inline-flex');
+          gsap.fromTo(matchingChips,
+            { scale: 0.85, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.3, stagger: 0.02, ease: 'back.out(1.7)' }
+          );
+        }
+      });
+    }
+
+    // Mouse Glow Tracking for Cards
+    document.querySelectorAll('.glow-hover').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+        card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+      });
+    });
+
+    // ==================== GSAP TIMELINES & SCROLLTRIGGERS ====================
+    window.addEventListener('DOMContentLoaded', () => {
+      // Register ScrollTrigger
+      gsap.registerPlugin(ScrollTrigger);
+
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReducedMotion) return;
+
+      // 1. Hero Entrance Timeline
+      const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      heroTl
+        .from('.hero-badge', { y: -20, opacity: 0, duration: 0.7 })
+        .from('.hero-title', { y: 35, opacity: 0, duration: 0.9 }, '-=0.4')
+        .from('.hero-lead', { y: 25, opacity: 0, duration: 0.8 }, '-=0.5')
+        .from('.hero-cta-group', { y: 20, opacity: 0, duration: 0.7 }, '-=0.4')
+        .from('.hero-os-info', { opacity: 0, duration: 0.6 }, '-=0.3')
+        .from('.hero-mockup', { y: 60, opacity: 0, scale: 0.96, duration: 1.1, ease: 'power2.out' }, '-=0.4');
+
+      // 2. Parallax 3D tilt on Hero Mockup
+      const heroMockup = document.getElementById('mockup-container');
+      const heroSection = document.getElementById('hero-section');
+      if (heroMockup && heroSection) {
+        heroSection.addEventListener('mousemove', (e) => {
+          const rect = heroSection.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width - 0.5;
+          const y = (e.clientY - rect.top) / rect.height - 0.5;
+          gsap.to(heroMockup, {
+            rotateY: x * 6,
+            rotateX: -y * 6,
+            transformPerspective: 1200,
+            duration: 0.6,
+            ease: 'power1.out'
+          });
+        });
+        heroSection.addEventListener('mouseleave', () => {
+          gsap.to(heroMockup, {
+            rotateY: 0,
+            rotateX: 0,
+            duration: 0.8,
+            ease: 'power2.out'
+          });
+        });
+      }
+
+      // 3. Section Headers Reveal
+      gsap.utils.toArray('.section-header').forEach(header => {
+        gsap.from(header, {
+          scrollTrigger: {
+            trigger: header,
+            start: 'top 85%',
+            toggleActions: 'play none none none'
+          },
+          y: 30,
+          opacity: 0,
+          duration: 0.8,
+          ease: 'power3.out'
+        });
+      });
+
+      // 4. Feature Cards Stagger
+      gsap.from('.features-grid .feature-card', {
+        scrollTrigger: {
+          trigger: '.features-grid',
+          start: 'top 80%',
+          toggleActions: 'play none none none'
+        },
+        y: 40,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.12,
+        ease: 'power3.out'
+      });
+
+      // 5. Benchmark Cards & Bar Animations
+      gsap.from('.benchmarks-grid .benchmark-card', {
+        scrollTrigger: {
+          trigger: '.benchmarks-grid',
+          start: 'top 80%',
+          toggleActions: 'play none none none'
+        },
+        y: 40,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.15,
+        ease: 'power3.out',
+        onComplete: () => {
+          // Fill benchmark bars
+          document.querySelectorAll('.benchmark-bar').forEach(bar => {
+            const targetWidth = bar.getAttribute('data-width');
+            gsap.to(bar, { width: targetWidth, duration: 1.2, ease: 'power2.out' });
+          });
+        }
+      });
+
+      // 6. Shortcut Items Stagger
+      gsap.from('.shortcuts-grid .shortcut-item', {
+        scrollTrigger: {
+          trigger: '.shortcuts-grid',
+          start: 'top 85%',
+          toggleActions: 'play none none none'
+        },
+        y: 20,
+        opacity: 0,
+        duration: 0.6,
+        stagger: 0.06,
+        ease: 'power2.out'
+      });
+
+      // 7. Principles Cards Stagger
+      gsap.from('.principles-grid .principle-card', {
+        scrollTrigger: {
+          trigger: '.principles-grid',
+          start: 'top 80%',
+          toggleActions: 'play none none none'
+        },
+        y: 35,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.12,
+        ease: 'power3.out'
+      });
+
+      // 8. Dual Mode Panel Reveal
+      gsap.from('#mode-panel-video', {
+        scrollTrigger: {
+          trigger: '#modes',
+          start: 'top 75%',
+          toggleActions: 'play none none none'
+        },
+        y: 45,
+        opacity: 0,
+        duration: 0.9,
+        ease: 'power3.out'
+      });
+
+      // 9. Specs Strip Reveal
+      gsap.from('#specs', {
+        scrollTrigger: {
+          trigger: '#specs',
+          start: 'top 85%',
+          toggleActions: 'play none none none'
+        },
+        y: 30,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'power3.out'
+      });
+    });
+  </script>
 </body>
 </html>
