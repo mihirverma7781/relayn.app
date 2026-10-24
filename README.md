@@ -2,6 +2,8 @@
 
 An original, local-first desktop media player built with Tauri 2, React, TypeScript, Rust and libVLC 3. The implementation is an MVP undergoing native verification; it is not yet a production release.
 
+The approved abstract N logo originals live in `assets/brand/`. The header uses the sage symbol; the favicon and generated Windows/macOS icons use the supplied app icon. See `branding.md` and `design.md` for variant usage and regeneration instructions.
+
 ## Run
 
 Prerequisites: Node.js 26, Rust stable, and native platform tools. Windows needs MSVC C++ Build Tools, a Windows SDK and WebView2. macOS needs Xcode Command Line Tools. `npm run doctor` checks the toolchain, including compiling a small Rust executable. The npm desktop scripts discover Rust under your user `.cargo/bin` even when it is absent from PATH.
@@ -72,7 +74,7 @@ The existing browser smoke test in `work/` verifies interface loading and modal 
 npm run package
 ```
 
-Windows configuration targets MSI. NSIS is also available via `npm run tauri -- build --bundles nsis`, but its compiler could not launch in this session (Windows error 623). macOS targets an application bundle and DMG. The GitHub workflow defines Windows x64, macOS ARM64 and macOS Intel builds; it has not been run in a remote repository. A separate Mac environment is required for macOS compilation, native tests, packaging, signing and notarization.
+Windows configuration targets MSI. NSIS is also available via `npm run tauri -- build --bundles nsis`, but its compiler could not launch in an earlier session (Windows error 623). macOS targets an application bundle and DMG. The GitHub workflow defines Windows x64, macOS ARM64 and macOS Intel builds. A user-provided macOS CI run failed during runtime preparation; a successful subsequent remote build has not been verified. A separate Mac environment is required for macOS compilation, native tests, packaging, signing and notarization.
 
 The macOS preparation script checks and rewrites bundled library references to loader-relative paths and signs nested dylibs with `APPLE_SIGNING_IDENTITY` (or an ad-hoc identity for development). This path requires real Mac validation. For public macOS distribution, configure Tauri's Apple signing/notarization credentials. Public Windows releases likewise need a signing identity. Test packages are unsigned development artifacts.
 

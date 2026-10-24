@@ -2,10 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {spawnSync} from 'node:child_process';
-const env={...process.env,PATH:path.join(os.homedir(),'.cargo/bin')+path.delimiter+process.env.PATH};
+const env={...process.env};
+const inheritedPath=process.env.PATH||process.env.Path||'';
+for(const key of Object.keys(env))if(key.toLowerCase()==='path')delete env[key];
+env.PATH=path.join(os.homedir(),'.cargo/bin')+path.delimiter+inheritedPath;
 let failed=false;
 function command(name,args){const result=spawnSync(name,args,{env,encoding:'utf8',windowsHide:true});if(result.error||result.status!==0){failed=true;console.error(`${name}: ${result.error?.message||result.stderr}`);return null;}console.log(result.stdout.trim());return result.stdout;}
-command('node',['--version']);command('rustc',['--version']);command('cargo',['--version']);
+command(process.execPath,['--version']);command('rustc',['--version']);command('cargo',['--version']);
 if(process.platform==='win32'){
  const vswhere=path.join(process.env['ProgramFiles(x86)']||'C:/Program Files (x86)','Microsoft Visual Studio/Installer/vswhere.exe');
  const root=command(vswhere,['-latest','-products','*','-requires','Microsoft.VisualStudio.Component.VC.Tools.x86.x64','-property','installationPath'])?.trim();

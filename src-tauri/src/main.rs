@@ -548,10 +548,20 @@ mod integration_tests {
             assert_eq!(snap.playback.duration, 6000);
             let v = engine.vlc.as_ref().unwrap();
             v.pause(true);
-            std::thread::sleep(Duration::from_millis(150));
+            for _ in 0..100 {
+                if v.snapshot().state == "paused" {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(50));
+            }
             assert_eq!(v.snapshot().state, "paused");
             v.seek(2000).unwrap();
-            std::thread::sleep(Duration::from_millis(100));
+            for _ in 0..100 {
+                if (v.snapshot().time - 2000).abs() < 500 {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(50));
+            }
             assert!((v.snapshot().time - 2000).abs() < 500);
             v.rate(1.5).unwrap();
             v.volume(50, true);
@@ -560,7 +570,12 @@ mod integration_tests {
                 v.subtitle(&root.parent().unwrap().join("work/fixtures/English.srt"))
                     .unwrap();
                 v.pause(false);
-                std::thread::sleep(Duration::from_millis(250));
+                for _ in 0..100 {
+                    if v.snapshot().subtitle_tracks.iter().any(|t| t.id >= 0) {
+                        break;
+                    }
+                    std::thread::sleep(Duration::from_millis(50));
+                }
                 let tracks = v.snapshot().subtitle_tracks;
                 assert!(
                     tracks.iter().any(|t| t.id >= 0),

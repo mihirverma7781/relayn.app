@@ -10,7 +10,9 @@ Use `RelayN` for compact branding and `RelayN Player` for the full product name.
 
 ## Brand identity and technical continuity
 
-The canonical user-facing name is **RelayN Player**; use **RelayN** in compact branding. The working tagline is “Your media. In motion.” Product identity and voice source of truth: [branding.md](branding.md). The logo is an original sage signal path between two endpoints. Names, trademark, domain, and store availability are not cleared by this implementation.
+The canonical user-facing name is **RelayN Player**; use **RelayN** in compact branding. The working tagline is “Your media. In motion.” Product identity and voice source of truth: [branding.md](branding.md). Use the approved abstract N SVGs in `assets/brand/`; these user-supplied assets supersede the earlier endpoint-and-signal concept. Names, trademark, domain, and store availability are not cleared by this implementation.
+
+Use `relayn-symbol-sage.svg` in the dark application header, `relayn-symbol-ivory.svg` for neutral marks on dark surfaces, and `relayn-symbol-dark.svg` on light surfaces. Use `relayn-app-icon.svg` for the favicon and native application icon. Preserve the geometry, palette and square aspect ratio; do not replace the mark with a play icon, recolor it with CSS filters, or stretch it. Keep the header mark visible at the minimum desktop width. Adjacent text or the enclosing button supplies the accessible name, so its image has empty alt text. Regenerate desktop icons with `node node_modules/@tauri-apps/cli/tauri.js icon assets/brand/relayn-app-icon.svg --output src-tauri/icons`.
 
 Keep compatibility-sensitive identifiers stable unless a migration is deliberately designed: npm package `aster-player`, Rust crate `aster-player`, bundle identifier `com.aster.player`, persistence key `aster.view`, and `ASTER_CONFIG_DIR`.
 

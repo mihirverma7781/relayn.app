@@ -153,10 +153,15 @@ Use semantic tokens (`background`, `surface`, `text`, `muted`, `border`, `accent
 
 ### Logo and app icon concept
 
-Create a simple, original mark built from **two aligned endpoints joined by a clean path or signal line**, suggesting reliable handoff and continuity. A subtle `R`/`N` monogram is acceptable only if it remains legible at small sizes.
+The approved identity is the user-supplied **abstract N** in `assets/brand/`. It supersedes the earlier two-endpoint signal-line concept. Preserve these SVGs unchanged; do not invent a replacement logo.
+
+- `relayn-app-icon.svg`: ivory N on charcoal, used for native icons and favicon. `assets/app-icon.svg` is an identical compatibility copy.
+- `relayn-symbol-sage.svg`: sage mark for the dark application header.
+- `relayn-symbol-ivory.svg`: neutral mark on dark backgrounds.
+- `relayn-symbol-dark.svg`: dark mark on light backgrounds; this asset does not imply that a light application theme is implemented.
 
 - Keep the icon simple enough to work at 16, 32, 48, 128, and 256 pixels.
-- Use the muted sage accent on a graphite or warm-neutral base.
+- Use each supplied variant on its documented background; preserve its original colors and proportions.
 - Ensure the icon reads clearly in monochrome and in both light and dark contexts.
 - Avoid literal play-button-only logos, audio wave clichés, gradients, tiny detail, and visual similarity to existing media player logos.
 - If icon assets already exist, inspect them before replacing them. Do not generate a new logo automatically if the repo already has an approved one.
