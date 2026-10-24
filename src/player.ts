@@ -1,0 +1,9 @@
+export interface Track {id:number;name:string}
+export interface Item {id:number;path:string;name:string}
+export interface Settings {volume:number;muted:boolean;rate:number;repeat:'off'|'all'|'one';aspect:string;playlist:Item[];current:number|null}
+export interface Playback {state:string;time:number;duration:number;seekable:boolean;rate:number;audio_tracks:Track[];subtitle_tracks:Track[];audio_track:number;subtitle_track:number;title:string;artist:string;album:string}
+export interface Snapshot {playback:Playback;settings:Settings;error:string|null;runtime:string}
+export const initial:Snapshot={playback:{state:'idle',time:0,duration:0,seekable:false,rate:1,audio_tracks:[],subtitle_tracks:[],audio_track:-1,subtitle_track:-1,title:'',artist:'',album:''},settings:{volume:80,muted:false,rate:1,repeat:'off',aspect:'',playlist:[],current:null},error:null,runtime:'Connecting…'};
+export function formatTime(ms:number):string {const seconds=Math.floor(Math.max(0,Number.isFinite(ms)?ms:0)/1000);const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=seconds%60;return `${h?`${h}:`:''}${h?String(m).padStart(2,'0'):m}:${String(s).padStart(2,'0')}`;}
+export function shortcut(key:string,ctrl:boolean,shift:boolean):string|null {if(ctrl&&key.toLowerCase()==='o')return shift?'append':'open';if(ctrl)return null;return ({' ':'toggle',n:'next',p:'previous',s:'stop',m:'mute',f:'fullscreen',Escape:'exit_fullscreen',ArrowRight:'seek_forward',ArrowLeft:'seek_backward',ArrowUp:'volume_up',ArrowDown:'volume_down',v:'cycle_subtitle',b:'cycle_audio',a:'cycle_aspect','+':'faster','-':'slower'} as Record<string,string>)[key]??null;}
+export function nextTrack(tracks:Track[],current:number):number|null {if(!tracks.length)return null;const i=tracks.findIndex(t=>t.id===current);return tracks[(i+1)%tracks.length].id;}

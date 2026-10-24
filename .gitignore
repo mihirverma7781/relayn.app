@@ -1,0 +1,11 @@
+node_modules/
+dist/
+work/
+outputs/
+src-tauri/target/
+src-tauri/resources/vlc/*
+!src-tauri/resources/vlc/.gitkeep
+*.log
+.DS_Store
+
+src-tauri/resources/vlc-*/

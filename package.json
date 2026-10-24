@@ -1,0 +1,40 @@
+{
+  "name": "aster-player",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "tauri": "node scripts/toolchain.mjs tauri",
+    "desktop": "node scripts/toolchain.mjs tauri dev",
+    "package": "npm run runtime:fetch && node scripts/prepare-macos.mjs && node scripts/toolchain.mjs tauri build",
+    "verify": "npm run test && npm run build",
+    "runtime:fetch": "node scripts/fetch-vlc.mjs",
+    "runtime:stage": "node scripts/stage-vlc.mjs",
+    "native:check": "node scripts/toolchain.mjs cargo check --manifest-path src-tauri/Cargo.toml",
+    "native:test": "node scripts/toolchain.mjs cargo test --manifest-path src-tauri/Cargo.toml",
+    "fixtures": "node scripts/generate-fixtures.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "native:integration": "node scripts/toolchain.mjs cargo test --manifest-path src-tauri/Cargo.toml -- --ignored --nocapture --test-threads=1"
+  },
+  "dependencies": {
+    "@fontsource-variable/hanken-grotesk": "^5.3.0",
+    "@fontsource-variable/newsreader": "^5.3.0",
+    "@fontsource/space-mono": "^5.3.0",
+    "@tauri-apps/api": "^2",
+    "lucide-react": "^0.468",
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.2",
+    "typescript": "~5.7.3",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}
