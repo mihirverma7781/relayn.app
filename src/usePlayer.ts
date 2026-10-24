@@ -3,10 +3,11 @@ import {invoke,isTauri} from '@tauri-apps/api/core';
 import {listen} from '@tauri-apps/api/event';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import {initial,nextTrack,shortcut,type Item,type Snapshot} from './player';
-import {mediaKind,type View} from './media';
+import {mediaKind} from './media';
 
 let webAudio:HTMLAudioElement|null=null;
-const webObjectUrls=new Map<number,string>();
+let webVideoEl:HTMLVideoElement|null=null;
+export const webObjectUrls=new Map<number,string>();
 
 export function usePlayer(){
  const [state,setState]=useState<Snapshot>(initial);
@@ -19,13 +20,27 @@ export function usePlayer(){
 
  const report=useCallback((error:unknown)=>setMessage(String(error)),[]);
 
+ const getActiveWebMedia=useCallback(():HTMLMediaElement|null=>{
+  const curSnap=stateRef.current;
+  const item=curSnap.settings.playlist.find(i=>i.id===curSnap.settings.current);
+  if(!item)return webVideoEl||webAudio;
+  return mediaKind(item.name)==='video'?(webVideoEl||webAudio):(webAudio||webVideoEl);
+ },[]);
+
  const playWebItem=useCallback((item:Item)=>{
-  if(!webAudio)webAudio=new Audio();
+  const isVideo=mediaKind(item.name)==='video';
   const url=webObjectUrls.get(item.id)||item.path;
-  webAudio.src=url;
-  webAudio.volume=stateRef.current.settings.muted?0:stateRef.current.settings.volume/100;
-  webAudio.playbackRate=stateRef.current.settings.rate;
-  webAudio.play().catch(report);
+
+  // Stop previous
+  if(webAudio&&webAudio!==webVideoEl){webAudio.pause();}
+  if(webVideoEl){webVideoEl.pause();}
+
+  const media:HTMLMediaElement=(isVideo&&webVideoEl)?webVideoEl:(webAudio||=(new Audio()));
+  media.src=url;
+  media.volume=stateRef.current.settings.muted?0:stateRef.current.settings.volume/100;
+  media.playbackRate=stateRef.current.settings.rate;
+  media.play().catch(report);
+
   setState(prev=>({
    ...prev,
    settings:{...prev.settings,current:item.id},
@@ -33,7 +48,7 @@ export function usePlayer(){
     ...prev.playback,
     state:'playing',
     title:item.name,
-    artist:'Local audio preview',
+    artist:isVideo?'Local video preview':'Local audio preview',
     album:'Web mode playback'
    }
   }));
@@ -52,38 +67,40 @@ export function usePlayer(){
   // Web preview mode fallback:
   const curSnap=stateRef.current;
   const playlist=curSnap.settings.playlist;
+  const media=getActiveWebMedia();
+
   if(kind==='play'){
    const target=playlist.find(i=>i.id===(id??curSnap.settings.current))||playlist[0];
    if(target)playWebItem(target);
   }else if(kind==='toggle'){
-   if(!webAudio||!webAudio.src){
+   if(!media||!media.src){
     const target=playlist.find(i=>i.id===curSnap.settings.current)||playlist[0];
     if(target)playWebItem(target);
-   }else if(webAudio.paused){
-    webAudio.play().catch(report);
+   }else if(media.paused){
+    media.play().catch(report);
     setState(p=>({...p,playback:{...p.playback,state:'playing'}}));
    }else{
-    webAudio.pause();
+    media.pause();
     setState(p=>({...p,playback:{...p.playback,state:'paused'}}));
    }
   }else if(kind==='stop'){
-   if(webAudio){webAudio.pause();webAudio.currentTime=0;}
+   if(media){media.pause();media.currentTime=0;}
    setState(p=>({...p,playback:{...p.playback,state:'stopped',time:0}}));
   }else if(kind==='seek'){
    const ms=value??0;
-   if(webAudio)webAudio.currentTime=ms/1000;
+   if(media)media.currentTime=ms/1000;
    setState(p=>({...p,playback:{...p.playback,time:ms}}));
   }else if(kind==='volume'){
    const vol=Math.max(0,Math.min(100,value??80));
-   if(webAudio&&!curSnap.settings.muted)webAudio.volume=vol/100;
+   if(media&&!curSnap.settings.muted)media.volume=vol/100;
    setState(p=>({...p,settings:{...p.settings,volume:vol}}));
   }else if(kind==='mute'){
    const nextMute=!curSnap.settings.muted;
-   if(webAudio)webAudio.volume=nextMute?0:curSnap.settings.volume/100;
+   if(media)media.volume=nextMute?0:curSnap.settings.volume/100;
    setState(p=>({...p,settings:{...p.settings,muted:nextMute}}));
   }else if(kind==='rate'){
    const r=value??1;
-   if(webAudio)webAudio.playbackRate=r;
+   if(media)media.playbackRate=r;
    setState(p=>({...p,settings:{...p.settings,rate:r}}));
   }else if(kind==='next'||kind==='previous'){
    if(!playlist.length)return;
@@ -92,7 +109,7 @@ export function usePlayer(){
    playWebItem(playlist[nextIdx]);
   }else if(kind==='repeat'){
    const r=(text as 'off'|'all'|'one')||'off';
-   if(webAudio)webAudio.loop=r==='one';
+   if(media)media.loop=r==='one';
    setState(p=>({...p,settings:{...p.settings,repeat:r}}));
   }else if(kind==='aspect'){
    setState(p=>({...p,settings:{...p.settings,aspect:text||''}}));
@@ -115,37 +132,40 @@ export function usePlayer(){
     setState(p=>({...p,settings:{...p.settings,playlist:next}}));
    }
   }else if(kind==='clear'){
-   if(webAudio){webAudio.pause();webAudio.src='';}
+   if(media){media.pause();media.src='';}
    setState(p=>({...p,settings:{...p.settings,playlist:[],current:null},playback:{...initial.playback}}));
   }
- },[native,playWebItem,report]);
+ },[native,report,playWebItem,getActiveWebMedia]);
 
- const handleFilesSelected=useCallback((fileList:FileList|File[],replace:boolean)=>{
+ const handleFilesSelected=useCallback((fileList:FileList,replace=false)=>{
   const files=Array.from(fileList);
   if(!files.length)return;
-  let maxId=Math.max(0,...stateRef.current.settings.playlist.map(i=>i.id));
+  let nextId=Math.max(0,...stateRef.current.settings.playlist.map(i=>i.id))+1;
   const newItems:Item[]=files.map(f=>{
-   const id=++maxId;
-   const objUrl=URL.createObjectURL(f);
-   webObjectUrls.set(id,objUrl);
-   return {id,name:f.name,path:f.name};
+   const id=nextId++;
+   const url=URL.createObjectURL(f);
+   webObjectUrls.set(id,url);
+   return {id,path:f.name,name:f.name};
   });
-  setMessage('');
-  setState(prev=>{
-   const playlist=replace?newItems:[...prev.settings.playlist,...newItems];
-   const current=replace||prev.settings.current===null?(newItems[0]?.id??null):prev.settings.current;
-   return {...prev,settings:{...prev.settings,playlist,current}};
-  });
-  if(replace&&newItems[0]){
+  setState(p=>({
+   ...p,
+   settings:{
+    ...p.settings,
+    playlist:replace?newItems:[...p.settings.playlist,...newItems],
+    current:replace||!p.settings.current?newItems[0].id:p.settings.current
+   }
+  }));
+  if(replace||!stateRef.current.settings.current){
    playWebItem(newItems[0]);
   }
  },[playWebItem]);
 
- const open=useCallback(async(replace:boolean)=>{
+ const open=useCallback(async(replace=true)=>{
   if(native){
    try{
+    setMessage('');
     const paths=await invoke<string[]>('pick_files',{subtitle:false});
-    if(paths.length){setMessage('');await invoke('open_paths',{paths,replace});}
+    if(paths.length)await invoke('open_paths',{paths,replace});
    }catch(e){
     report(e);
    }
@@ -223,39 +243,47 @@ export function usePlayer(){
   }
 
   // Web mode initialization & listeners
-  setState(p=>({...p,runtime:'Web Preview · Tauri app uses libVLC'}));
+  setState(p=>({...p,runtime:'Web Preview Mode'}));
   if(!webAudio)webAudio=new Audio();
-  const audio=webAudio;
-  const onTimeUpdate=()=>{
-   setState(p=>({
-    ...p,
-    playback:{
-     ...p.playback,
-     time:Math.floor(audio.currentTime*1000),
-     duration:Math.floor((audio.duration||0)*1000),
-     seekable:Number.isFinite(audio.duration)&&audio.duration>0
-    }
-   }));
-  };
-  const onEnded=()=>{
-   const curSnap=stateRef.current;
-   const list=curSnap.settings.playlist;
-   if(curSnap.settings.repeat==='one'){
-    audio.currentTime=0;
-    audio.play().catch(report);
-   }else if(list.length){
+
+  const bindMediaEvents=(media:HTMLMediaElement)=>{
+   const onTimeUpdate=()=>{
+    setState(p=>({
+     ...p,
+     playback:{
+      ...p.playback,
+      time:Math.floor(media.currentTime*1000),
+      duration:Math.floor((media.duration||0)*1000),
+      seekable:Number.isFinite(media.duration)&&media.duration>0
+     }
+    }));
+   };
+   const onEnded=()=>{
+    const curSnap=stateRef.current;
+    const list=curSnap.settings.playlist;
     const idx=list.findIndex(i=>i.id===curSnap.settings.current);
-    if(idx>=0&&idx<list.length-1){
+    if(curSnap.settings.repeat==='one'){
+     media.currentTime=0;
+     media.play().catch(report);
+    }else if(idx>=0&&idx<list.length-1){
      playWebItem(list[idx+1]);
     }else if(curSnap.settings.repeat==='all'&&list[0]){
      playWebItem(list[0]);
     }else{
      setState(p=>({...p,playback:{...p.playback,state:'stopped',time:0}}));
     }
-   }
+   };
+   media.addEventListener('timeupdate',onTimeUpdate);
+   media.addEventListener('ended',onEnded);
+   return()=>{
+    media.removeEventListener('timeupdate',onTimeUpdate);
+    media.removeEventListener('ended',onEnded);
+   };
   };
-  audio.addEventListener('timeupdate',onTimeUpdate);
-  audio.addEventListener('ended',onEnded);
+
+  const unbindAudio=bindMediaEvents(webAudio);
+  let unbindVideo=()=>{};
+  if(webVideoEl)unbindVideo=bindMediaEvents(webVideoEl);
 
   const onDragOver=(e:DragEvent)=>{e.preventDefault();setDragging(true);};
   const onDragLeave=(e:DragEvent)=>{
@@ -273,13 +301,17 @@ export function usePlayer(){
   window.addEventListener('drop',onDrop);
 
   return()=>{
-   audio.removeEventListener('timeupdate',onTimeUpdate);
-   audio.removeEventListener('ended',onEnded);
+   unbindAudio();
+   unbindVideo();
    window.removeEventListener('dragover',onDragOver);
    window.removeEventListener('dragleave',onDragLeave);
    window.removeEventListener('drop',onDrop);
   };
  },[native,report,handleFilesSelected,playWebItem]);
+
+ const setWebVideoRef=useCallback((el:HTMLVideoElement|null)=>{
+  webVideoEl=el;
+ },[]);
 
  const dismiss=()=>{setMessage('');if(native)void call('dismiss_error');};
 
@@ -300,30 +332,57 @@ export function usePlayer(){
   URL.revokeObjectURL(url);
  };
 
- return {state,stateRef,native,call,open,fullscreen,subtitles,dragging,seeking,setSeeking,error:message||state.error,dismiss,exportList,report};
+ return {
+  state,
+  stateRef,
+  native,
+  call,
+  open,
+  fullscreen,
+  subtitles,
+  dragging,
+  seeking,
+  setSeeking,
+  error:message||state.error,
+  dismiss,
+  exportList,
+  report,
+  setWebVideoRef
+ };
 }
 
 export type PlayerController=ReturnType<typeof usePlayer>;
 
-export function useNativeSurface(player:PlayerController,view:View,covered:boolean){
+export function useNativeSurface(player:PlayerController,active=true,covered=false){
  const ref=useRef<HTMLDivElement>(null);
  const {native,stateRef,report}=player;
  const current=player.state.settings.current;
+
  const place=useCallback(()=>{
   if(!native)return;
   const rect=ref.current?.getBoundingClientRect();
   const snap=stateRef.current;
   const item=snap.settings.playlist.find(i=>i.id===snap.settings.current);
-  const visible=!!rect&&!!item&&mediaKind(item.name)!=='audio'&&['home','video'].includes(view)&&!covered&&rect.width>0&&rect.height>0;
-  void invoke('place_video',{rect:{x:rect?.x||0,y:rect?.y||0,width:rect?.width||1,height:rect?.height||1,visible}}).catch(report);
- },[native,stateRef,report,view,covered]);
+  const visible=!!rect&&!!item&&mediaKind(item.name)!=='audio'&&active&&!covered&&rect.width>0&&rect.height>0;
+  void invoke('place_video',{
+   rect:{
+    x:Math.round(rect?.x||0),
+    y:Math.round(rect?.y||0),
+    width:Math.round(rect?.width||1),
+    height:Math.round(rect?.height||1),
+    visible
+   }
+  }).catch(report);
+ },[native,stateRef,report,active,covered]);
 
  useEffect(()=>{
   const observer=new ResizeObserver(place);
   if(ref.current)observer.observe(ref.current);
   window.addEventListener('resize',place);
   place();
+  const t=setTimeout(place,80);
   return()=>{
+   clearTimeout(t);
    observer.disconnect();
    window.removeEventListener('resize',place);
   };
@@ -332,16 +391,21 @@ export function useNativeSurface(player:PlayerController,view:View,covered:boole
  return ref;
 }
 
-export function usePlayerKeys(player:PlayerController,onFullscreen:()=>void,search:()=>void){
+export function usePlayerKeys(player:PlayerController,onFullscreen:()=>void,onToggleQueue:()=>void){
  const {stateRef,call,open,fullscreen}=player;
  useEffect(()=>{
   const handler=(event:KeyboardEvent)=>{
-   if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){
+   if(event.target instanceof HTMLElement&&(['INPUT','SELECT','TEXTAREA'].includes(event.target.tagName)||event.target.isContentEditable||(event.target.tagName==='BUTTON'&&[' ','Enter'].includes(event.key))))return;
+   if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='o'){
     event.preventDefault();
-    search();
+    void open(true);
     return;
    }
-   if(event.target instanceof HTMLElement&&(['INPUT','SELECT','TEXTAREA'].includes(event.target.tagName)||event.target.isContentEditable||(event.target.tagName==='BUTTON'&&[' ','Enter'].includes(event.key))))return;
+   if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='l'){
+    event.preventDefault();
+    onToggleQueue();
+    return;
+   }
    const cmd=shortcut(event.key,event.ctrlKey||event.metaKey,event.shiftKey);
    if(!cmd)return;
    event.preventDefault();
@@ -365,5 +429,5 @@ export function usePlayerKeys(player:PlayerController,onFullscreen:()=>void,sear
   };
   window.addEventListener('keydown',handler);
   return()=>window.removeEventListener('keydown',handler);
- },[stateRef,call,open,fullscreen,onFullscreen,search]);
+ },[stateRef,call,open,fullscreen,onFullscreen,onToggleQueue]);
 }

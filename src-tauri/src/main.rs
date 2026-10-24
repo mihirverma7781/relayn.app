@@ -27,6 +27,7 @@ struct Engine {
     error: Option<String>,
     persist_allowed: bool,
     last_state: String,
+    surface_handle: Arc<Mutex<usize>>,
 }
 type Shared = Arc<Mutex<Engine>>;
 impl Engine {
@@ -66,7 +67,11 @@ impl Engine {
         if !std::path::Path::new(&item.path).is_file() {
             return Err(format!("File is missing or unavailable: {}", item.name));
         }
+        let handle = self.surface_handle.lock().map(|h| *h).unwrap_or(0);
         let v = self.vlc.as_mut().ok_or("libVLC is not available")?;
+        if handle != 0 {
+            let _ = v.attach(handle);
+        }
         v.open(&item.path)?;
         v.volume(self.saved.volume, self.saved.muted);
         v.rate(self.saved.rate)?;
@@ -425,9 +430,11 @@ async fn place_video(
         .map_err(|e| e.to_string())?
 }
 fn main() {
+    let surface = surface::Surface::default();
+    let surface_handle = surface.handle.clone();
     tauri::Builder::default()
-        .manage(surface::Surface::default())
-        .setup(|app| {
+        .manage(surface)
+        .setup(move |app| {
             let config = std::env::var_os("ASTER_CONFIG_DIR")
                 .map(PathBuf::from)
                 .unwrap_or(app.path().app_config_dir()?)
@@ -448,6 +455,7 @@ fn main() {
                 error,
                 persist_allowed,
                 last_state: String::new(),
+                surface_handle,
             }));
             app.manage(state.clone());
             let handle = app.handle().clone();
@@ -518,6 +526,7 @@ mod integration_tests {
             error: None,
             persist_allowed: true,
             last_state: String::new(),
+            surface_handle: Arc::new(Mutex::new(0)),
         };
         for (index, name) in ["tone.wav", "color-motion.avi", "corrupt.mp4"]
             .iter()

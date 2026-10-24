@@ -1,9 +1,11 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::WebviewWindow;
-#[derive(Default)]
+
+#[derive(Default, Clone)]
 pub struct Surface {
-    pub handle: Mutex<usize>,
+    pub handle: Arc<Mutex<usize>>,
 }
+
 #[derive(serde::Deserialize, Clone)]
 pub struct Rect {
     pub x: f64,
@@ -12,6 +14,7 @@ pub struct Rect {
     pub height: f64,
     pub visible: bool,
 }
+
 impl Surface {
     pub fn place(&self, window: &WebviewWindow, rect: Rect) -> Result<usize, String> {
         let mut handle = self
@@ -96,14 +99,15 @@ impl Surface {
             };
             if *handle == 0 {
                 let allocated: *mut Object = msg_send![class!(NSView), alloc];
-                let view: *mut Object = msg_send![allocated,initWithFrame:frame];
-                let _: () = msg_send![content,addSubview:view];
+                let view: *mut Object = msg_send![allocated, initWithFrame: frame];
+                let _: () = msg_send![view, setWantsLayer: 1i8];
+                let _: () = msg_send![content, addSubview: view positioned: 1i64 relativeTo: std::ptr::null_mut::<Object>()];
                 let _: () = msg_send![view, release];
                 *handle = view as usize;
             }
             let view = *handle as *mut Object;
-            let _: () = msg_send![view,setFrame:frame];
-            let _: () = msg_send![view,setHidden:if rect.visible{0i8}else{1i8}];
+            let _: () = msg_send![view, setFrame: frame];
+            let _: () = msg_send![view, setHidden: if rect.visible { 0i8 } else { 1i8 }];
         }
         Ok(*handle)
     }
