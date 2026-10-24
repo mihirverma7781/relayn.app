@@ -119,14 +119,23 @@ These rules are essential, not cosmetic:
 - Do not replace the real player with an HTML video element, screenshots, simulated playback state or timers.
 - Preserve keyboard shortcuts, native file dialogs, drag-and-drop, subtitle and audio track IDs, persistent settings and meaningful errors.
 
-## Interaction and accessibility
+## Interaction, motion and accessibility
 
 - Focus indicators use the sage accent and remain visible on all interactive controls.
 - Icon buttons need action-specific accessible labels. Active navigation uses `aria-current`; filters/layout toggles use `aria-pressed`; the queue toggle exposes its expanded state.
 - Settings/information dialogs use dialog semantics, initial focus, Tab/Shift+Tab containment, Escape dismissal and focus restoration. Escape in a dialog must not simultaneously change player fullscreen.
 - Text inputs retain normal editing shortcuts. Ctrl/Cmd+K focuses collection search; playback shortcuts remain available elsewhere without double-triggering Space on focused buttons.
 - Errors are actionable and use `role="alert"`. Normal empty states explain how to add files.
-- Respect `prefers-reduced-motion`. Use short color/opacity transitions; avoid decorative animations during playback.
+- Respect `prefers-reduced-motion`. All animations and transitions are disabled under user reduced motion preference.
+- Motion and micro-interaction extensions:
+  - **Celestial stage**: Slow orbital rotation on idle rings (`.orbit-one`, `.orbit-two`, `.orbit-three`) with glowing satellite nodes and animated equalizer bars in the central emblem.
+  - **Interactive stage parallax**: Responsive cursor depth effect on the empty stage canvas.
+  - **Tactile session cards**: Vinyl record slide-out on card hover with concentric groove reflections, and smooth continuous rotation during active playback.
+  - **Landing feature exploration**: Interactive pillar chips (`LOCAL FIRST`, `UNIVERSAL CODECS`, `RESTRAINED FOCUS`, `SMART CONTINUITY`) with live explanation cards and dedicated workspace tour modal.
+  - **Interactive shortcut tester**: Live keypress illumination on keyboard shortcut rows in settings.
+  - **Engine indicators**: Radar pulse on the live status dot and mini-spectrum soundbars in the status strip during playback.
+  - **View transitions**: Calm 250ms editorial fade and translate (`view-enter`).
+  - **Web preview fallback**: Browser file selection and preview playback for web environments, preserving libVLC for Tauri desktop.
 
 ## Responsive desktop behavior
 
