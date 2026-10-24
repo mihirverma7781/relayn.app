@@ -3,7 +3,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 if(process.platform!=='darwin')process.exit(0);
 const root=path.resolve('src-tauri/resources/vlc-3.0.24');
-function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(path.join(dir,entry.name)):[path.join(dir,entry.name)]);}
+function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>{const file=path.join(dir,entry.name);return entry.isDirectory()?walk(file):entry.isFile()?[file]:[];});}
 const dylibs=walk(root).filter(f=>f.endsWith('.dylib'));
 if(!dylibs.length)throw new Error('No staged macOS dylibs. Run npm run runtime:fetch first.');
 for(const file of dylibs){

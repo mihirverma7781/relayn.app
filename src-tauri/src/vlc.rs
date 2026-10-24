@@ -85,6 +85,34 @@ pub struct Vlc {
 }
 // Access is serialized by Engine's mutex. No libVLC callback touches Rust or the UI.
 unsafe impl Send for Vlc {}
+
+fn library_path(dir: &Path, filename: &str) -> Option<PathBuf> {
+    let direct = dir.join(filename);
+    if direct.is_file() {
+        return Some(direct);
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let prefix = filename.strip_suffix(".dylib")?;
+        return std::fs::read_dir(dir)
+            .ok()?
+            .flatten()
+            .map(|entry| entry.path())
+            .find(|candidate| {
+                candidate.is_file()
+                    && candidate
+                        .file_name()
+                        .and_then(|name| name.to_str())
+                        .is_some_and(|name| {
+                            name.starts_with(&format!("{prefix}.")) && name.ends_with(".dylib")
+                        })
+            });
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        None
+    }
+}
 impl Vlc {
     pub fn load(resource_dir: &Path) -> Result<Self, String> {
         let mut dirs = Vec::<PathBuf>::new();
@@ -107,7 +135,10 @@ impl Vlc {
         } else {
             "libvlc.dylib"
         };
-        let dir=dirs.into_iter().find(|p|p.join(filename).is_file()).ok_or("libVLC 3 is missing. Install VLC 3 matching this app's architecture, or set LIBVLC_DIR to its library directory.")?;
+        let (dir, lib_path) = dirs
+            .into_iter()
+            .find_map(|dir| library_path(&dir, filename).map(|lib| (dir, lib)))
+            .ok_or("libVLC 3 is missing. Install VLC 3 matching this app's architecture, or set LIBVLC_DIR to its library directory.")?;
         let plugins = if dir.join("plugins").is_dir() {
             dir.join("plugins")
         } else {
@@ -120,12 +151,13 @@ impl Vlc {
             } else {
                 "libvlccore.dylib"
             };
+            let core_path = library_path(&dir, core_name)
+                .ok_or_else(|| format!("Cannot find libVLC core beside {}", lib_path.display()))?;
             let core = Some(
-                Library::new(dir.join(core_name))
+                Library::new(core_path)
                     .map_err(|e| format!("Cannot load libVLC core at {}: {e}", dir.display()))?,
             );
-            let lib =
-                Library::new(dir.join(filename)).map_err(|e| format!("Cannot load libVLC: {e}"))?;
+            let lib = Library::new(lib_path).map_err(|e| format!("Cannot load libVLC: {e}"))?;
             let api = Api::load(&lib)?;
             let version = CStr::from_ptr((api.libvlc_get_version)())
                 .to_string_lossy()
