@@ -2293,3 +2293,988 @@ kbd {
 .video-stage.crop-235-1 .html-video-element {
   aspect-ratio: 2.35 / 1;
 }
+
+/* ================= PRODUCTION-GRADE VLC MEDIA PLAYER STYLING ================= */
+
+/* App Shell */
+.vlc-app-shell {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  position: relative;
+  user-select: none;
+}
+
+/* VLC Top Header */
+.vlc-top-header {
+  height: 44px;
+  background: rgba(23, 26, 25, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--outline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 80;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.vlc-top-header.autohide {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+}
+.vlc-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+.vlc-brand-group:hover {
+  background: var(--surface);
+}
+.brand-text {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.vlc-header-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0 16px;
+}
+.header-media-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--lowest);
+  border: 1px solid var(--outline);
+  padding: 3px 12px;
+  border-radius: 4px;
+  max-width: 520px;
+}
+.format-chip {
+  font-size: 9px;
+  background: var(--high);
+  color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.title-str {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.artist-str {
+  font-size: 11px;
+  color: var(--muted);
+}
+.header-idle-tagline {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+}
+.vlc-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.header-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+}
+.header-btn:hover {
+  background: var(--surface);
+  border-color: var(--outline);
+  color: var(--text);
+}
+.header-btn.active {
+  background: var(--high);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.header-btn:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.btn-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  font-family: var(--mono);
+  font-size: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  padding: 1px 4px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* VLC Main Stage */
+.vlc-main-stage {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--lowest);
+  display: flex;
+}
+
+/* Video Stage */
+.vlc-video-stage {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Audio Stage */
+.vlc-audio-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+  padding: 40px;
+  background: radial-gradient(circle at center, var(--low) 0%, var(--lowest) 70%);
+}
+.audio-disc-container {
+  width: 220px;
+  height: 220px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.disc-grooves {
+  position: absolute;
+  inset: 0;
+  color: var(--high);
+  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.audio-disc-container.is-playing .disc-grooves {
+  animation: spinGrooves 8s linear infinite;
+}
+@keyframes spinGrooves {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.disc-artwork {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid var(--lowest);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  z-index: 2;
+}
+.audio-details-col {
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.format-badge {
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+.audio-details-col h1 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--text);
+  margin: 0;
+}
+.artist-line {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+.album-line {
+  font-size: 12px;
+  color: var(--outline);
+  margin: 0;
+}
+.audio-eq-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 20px;
+  margin-top: 12px;
+}
+.audio-eq-bars span {
+  width: 3px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 1px;
+  transition: height 0.2s ease;
+}
+.audio-eq-bars.animated span:nth-child(1) { animation: eqBar 0.7s infinite alternate ease-in-out; }
+.audio-eq-bars.animated span:nth-child(2) { animation: eqBar 0.9s infinite alternate ease-in-out; }
+.audio-eq-bars.animated span:nth-child(3) { animation: eqBar 0.6s infinite alternate ease-in-out; }
+.audio-eq-bars.animated span:nth-child(4) { animation: eqBar 0.8s infinite alternate ease-in-out; }
+.audio-eq-bars.animated span:nth-child(5) { animation: eqBar 1.0s infinite alternate ease-in-out; }
+@keyframes eqBar {
+  from { height: 4px; }
+  to { height: 18px; }
+}
+
+/* VLC Dropzone */
+.vlc-dropzone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 40px;
+  position: relative;
+}
+.dropzone-text-group {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.dropzone-text-group h2 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--text);
+  margin: 0;
+}
+.dropzone-text-group p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+.dropzone-codecs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.dropzone-codecs span {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+/* VLC Dock Wrapper & Floating Controller */
+.vlc-dock-wrapper {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 28px);
+  max-width: 1080px;
+  z-index: 95;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.vlc-dock-wrapper.autohide {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(12px);
+}
+.vlc-player-dock {
+  background: rgba(26, 30, 28, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px 10px 14px;
+  gap: 6px;
+}
+
+/* Scrubber Timeline */
+.vlc-dock-timeline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.time-label {
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 44px;
+}
+.time-label.elapsed {
+  text-align: right;
+}
+.time-label.duration {
+  text-align: left;
+}
+.vlc-scrubber-track {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 16px;
+}
+.vlc-scrubber-track input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.vlc-loop-marker {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 4;
+}
+.vlc-loop-marker.marker-a {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+.vlc-loop-marker.marker-b {
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b;
+}
+
+/* Controls Row */
+.vlc-dock-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.vlc-control-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.vlc-control-group.group-center {
+  flex: 1;
+  justify-content: center;
+  padding: 0 12px;
+}
+.vlc-now-playing-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--lowest);
+  border: 1px solid var(--outline);
+  padding: 2px 10px;
+  border-radius: 4px;
+  max-width: 320px;
+}
+.vlc-idle-text {
+  font-size: 11px;
+  color: var(--outline);
+}
+
+/* VLC Control Buttons */
+.vlc-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.vlc-btn:hover {
+  background: var(--surface);
+  border-color: var(--outline);
+  color: var(--text);
+}
+.vlc-btn.active {
+  background: var(--high);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.vlc-btn:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+.vlc-btn-play {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--bg);
+  width: 34px;
+  height: 34px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+.vlc-btn-play:hover {
+  background: #c0d5c3;
+  transform: scale(1.04);
+}
+.vlc-btn-play:active {
+  transform: scale(0.96);
+}
+.vlc-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  font-family: var(--mono);
+  font-size: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  padding: 0 3px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* Volume Slider in Dock */
+.vlc-volume-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding-left: 6px;
+  border-left: 1px solid var(--outline);
+}
+.vlc-volume-slider-box {
+  width: 70px;
+  display: flex;
+  align-items: center;
+}
+.vlc-volume-slider {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.vlc-volume-slider.boosted {
+  accent-color: #f59e0b;
+}
+.vlc-vol-text {
+  font-size: 10px;
+  color: var(--muted);
+  width: 30px;
+  text-align: right;
+}
+.vlc-vol-text.boosted {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+/* VLC Popover Menus */
+.vlc-popover-anchor {
+  position: relative;
+}
+.vlc-popover-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: 6px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.75);
+  min-width: 230px;
+  max-width: 320px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 110;
+  animation: popoverFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.popover-title {
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+}
+.popover-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.popover-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.popover-item:hover {
+  background: var(--high);
+}
+.popover-item.selected {
+  background: var(--high);
+  color: var(--accent);
+  font-weight: 500;
+}
+.item-check {
+  color: var(--accent);
+}
+.popover-empty {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 6px 10px;
+}
+.popover-divider {
+  height: 1px;
+  background: var(--outline);
+  margin: 4px 0;
+}
+.popover-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: var(--lowest);
+  border: 1px solid var(--outline);
+  color: var(--text);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.popover-action-btn:hover {
+  background: var(--high);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.popover-sync-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.sync-nudge-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sync-btn {
+  background: var(--lowest);
+  border: 1px solid var(--outline);
+  color: var(--text);
+  font-size: 10px;
+  font-family: var(--mono);
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.sync-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.sync-val {
+  font-size: 10px;
+  color: var(--accent);
+  min-width: 44px;
+  text-align: center;
+}
+.speed-menu {
+  min-width: 190px;
+}
+.popover-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+}
+.speed-grid-btn {
+  background: var(--lowest);
+  border: 1px solid var(--outline);
+  color: var(--text);
+  font-size: 11px;
+  padding: 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.speed-grid-btn:hover {
+  background: var(--high);
+}
+.speed-grid-btn.active {
+  background: var(--high);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ================= VLC PLAYLIST TABLE VIEW ================= */
+.vlc-playlist-view {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  position: relative;
+  z-index: 10;
+}
+.playlist-toolbar {
+  height: 48px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--outline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  gap: 16px;
+}
+.toolbar-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--lowest);
+  border: 1px solid var(--outline);
+  padding: 4px 10px;
+  border-radius: 4px;
+  width: 260px;
+}
+.toolbar-search-input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+  width: 100%;
+}
+.clear-search-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.playlist-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vlc-toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.vlc-toolbar-btn:hover {
+  background: var(--high);
+}
+.vlc-toolbar-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+}
+.vlc-toolbar-btn.primary:hover {
+  background: #c0d5c3;
+}
+.vlc-toolbar-btn.highlight {
+  background: var(--high);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 500;
+}
+.vlc-toolbar-btn.danger {
+  color: var(--danger);
+}
+.vlc-toolbar-btn.danger:hover {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: var(--danger);
+}
+.vlc-toolbar-btn.active {
+  background: var(--high);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Playlist Table */
+.playlist-table-container {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+.playlist-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+.playlist-table thead {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--outline);
+  z-index: 5;
+}
+.playlist-table th {
+  padding: 8px 16px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.playlist-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+.playlist-row:hover {
+  background: var(--surface);
+}
+.playlist-row.is-playing {
+  background: rgba(169, 195, 173, 0.08);
+}
+.playlist-row td {
+  padding: 10px 16px;
+  color: var(--text);
+}
+.col-idx {
+  width: 48px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.row-play-indicator {
+  color: var(--accent);
+}
+.wave-icon {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+.item-title-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.item-icon.video {
+  color: #60a5fa;
+}
+.item-icon.audio {
+  color: #34d399;
+}
+.item-name {
+  font-weight: 500;
+}
+.col-ext {
+  width: 90px;
+}
+.ext-tag {
+  font-size: 9px;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--muted);
+}
+.col-path {
+  max-width: 280px;
+}
+.path-text {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+.col-actions {
+  width: 90px;
+  text-align: right;
+}
+.row-action-btns {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.row-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.row-btn:hover {
+  background: var(--surface);
+  border-color: var(--outline);
+  color: var(--text);
+}
+.row-btn.play:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.row-btn.delete:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.playlist-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  gap: 12px;
+}
+.playlist-empty-state h3 {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--text);
+  margin: 0;
+}
+.playlist-empty-state p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+  max-width: 400px;
+}
+
+.playlist-footer-summary {
+  height: 32px;
+  background: var(--surface);
+  border-top: 1px solid var(--outline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.now-playing-sub {
+  color: var(--accent);
+}
+
+/* ================= MODAL DIALOG POLISH ================= */
+.dialog-window {
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: 6px;
+  width: 100%;
+  max-width: 580px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalScaleIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalScaleIn {
+  from { opacity: 0; transform: scale(0.98) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.media-info-dialog {
+  max-width: 560px;
+}
+.shortcuts-dialog {
+  max-width: 500px;
+}
+.info-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  background: var(--lowest);
+  border: 1px solid var(--outline);
+  border-radius: 4px;
+  padding: 16px;
+}
+.info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.info-cell.full-width {
+  grid-column: span 2;
+}
+.info-cell .label {
+  font-size: 9px;
+  color: var(--muted);
+}
+.info-cell .value {
+  font-size: 13px;
+  color: var(--text);
+}
+.dialog-footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 8px;
+}

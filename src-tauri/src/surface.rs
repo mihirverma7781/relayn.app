@@ -64,13 +64,19 @@ impl Surface {
         }
         #[cfg(target_os = "macos")]
         unsafe {
-            use objc::runtime::Object;
+            use objc::declare::ClassDecl;
+            use objc::runtime::{Class, Object, Sel};
             use objc::{class, msg_send, sel, sel_impl};
             #[repr(C)]
             #[derive(Clone, Copy)]
             struct Point {
                 x: f64,
                 y: f64,
+            }
+            unsafe impl objc::Encode for Point {
+                fn encode() -> objc::Encoding {
+                    unsafe { objc::Encoding::from_str("{CGPoint=dd}") }
+                }
             }
             #[repr(C)]
             #[derive(Clone, Copy)]
@@ -84,6 +90,22 @@ impl Surface {
                 origin: Point,
                 size: Size,
             }
+
+            static INIT_CLASS: std::sync::Once = std::sync::Once::new();
+            INIT_CLASS.call_once(|| {
+                if let Some(mut decl) = ClassDecl::new("RelayNVideoView", class!(NSView)) {
+                    extern "C" fn hit_test(_this: &Object, _cmd: Sel, _pt: Point) -> *mut Object {
+                        std::ptr::null_mut()
+                    }
+                    decl.add_method(
+                        sel!(hitTest:),
+                        hit_test as extern "C" fn(&Object, Sel, Point) -> *mut Object,
+                    );
+                    decl.register();
+                }
+            });
+            let view_class = Class::get("RelayNVideoView").unwrap_or_else(|| class!(NSView));
+
             let native = window.ns_window().map_err(|e| e.to_string())? as *mut Object;
             let content: *mut Object = msg_send![native, contentView];
             let bounds: Frame = msg_send![content, bounds];
@@ -98,7 +120,7 @@ impl Surface {
                 },
             };
             if *handle == 0 {
-                let allocated: *mut Object = msg_send![class!(NSView), alloc];
+                let allocated: *mut Object = msg_send![view_class, alloc];
                 let view: *mut Object = msg_send![allocated, initWithFrame: frame];
                 let _: () = msg_send![view, setWantsLayer: 1i8];
                 let _: () = msg_send![content, addSubview: view positioned: 1i64 relativeTo: std::ptr::null_mut::<Object>()];
