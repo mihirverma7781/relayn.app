@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="dark"/>
+  <meta name="description" content="RelayN Player — A thoughtful desktop player for your local audio and video. Universal codec support, local-first, private, and beautifully designed for Windows and macOS."/>
+  <meta property="og:title" content="RelayN Player — Your media. In motion."/>
+  <meta property="og:description" content="A thoughtful desktop player for your local audio and video. Universal codecs, local-first privacy, and a calm interface for everyday use."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://relayn.mihirverma.in"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="RelayN Player"/>
+  <meta name="twitter:description" content="Your media. In motion."/>
+  <link rel="icon" type="image/svg+xml" href="assets/brand/relayn-app-icon.svg"/>
+  <title>RelayN Player — Your media. In motion.</title>
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Tokens (from branding.md) ── */
+    :root {
+      --bg: #171A19;
+      --lowest: #151817;
+      --low: #202523;
+      --surface: #202523;
+      --high: #292F2C;
+      --highest: #333A36;
+      --text: #F2F1E9;
+      --muted: #A7AEA8;
+      --accent: #A9C3AD;
+      --accent-strong: #C0D5C3;
+      --on-accent: #202522;
+      --outline: #39413C;
+      --danger: #E58B83;
+      --warning: #E4C27D;
+
+      --font-sans: 'Hanken Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-serif: 'Newsreader', 'Georgia', serif;
+      --font-mono: 'Space Mono', 'SF Mono', 'Menlo', monospace;
+
+      --max-w: 1120px;
+      --section-gap: 120px;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    /* ── Fonts ── */
+    @font-face {
+      font-family: 'Hanken Grotesk';
+      font-style: normal;
+      font-weight: 300 800;
+      font-display: swap;
+      src: url('https://fonts.gstatic.com/s/hankengrotesk/v21/ieVq2YZDLWuGJpnzaiwFXS9tYvBR.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Newsreader';
+      font-style: normal;
+      font-weight: 300 700;
+      font-display: swap;
+      src: url('https://fonts.gstatic.com/s/newsreader/v21/cY9qfjOCX1hbuyalUrK439vogpTN9A.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Space Mono';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url('https://fonts.gstatic.com/s/spacemono/v14/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2') format('woff2');
+    }
+
+    /* ── Base ── */
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { color: var(--accent); text-decoration: none; transition: color .2s; }
+    a:hover { color: var(--accent-strong); }
+
+    /* ── Layout ── */
+    .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+    section { padding: var(--section-gap) 0; }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(23, 26, 25, 0.85);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--outline);
+      transition: background .3s;
+    }
+    .nav-inner {
+      max-width: var(--max-w); margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 12px; }
+    .nav-brand img { width: 32px; height: 32px; }
+    .nav-brand span {
+      font-family: var(--font-mono); font-size: 15px; letter-spacing: 0.02em;
+      color: var(--text); font-weight: 400;
+    }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a {
+      font-size: 14px; color: var(--muted); font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 18px; border-radius: 999px;
+      background: var(--accent); color: var(--on-accent);
+      font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+      transition: background .2s, transform .15s;
+    }
+    .nav-cta:hover { background: var(--accent-strong); color: var(--on-accent); transform: translateY(-1px); }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      text-align: center; position: relative; padding-top: 80px;
+    }
+    .hero-content { max-width: 720px; }
+    .hero-tag {
+      display: inline-block;
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--accent); padding: 6px 16px;
+      border: 1px solid var(--outline); border-radius: 999px;
+      margin-bottom: 32px;
+    }
+    .hero h1 {
+      font-family: var(--font-serif); font-weight: 400; font-size: clamp(40px, 6vw, 72px);
+      line-height: 1.1; color: var(--text); margin-bottom: 24px;
+    }
+    .hero h1 em {
+      font-style: italic; color: var(--accent);
+    }
+    .hero p {
+      font-size: 18px; color: var(--muted); line-height: 1.7; max-width: 540px; margin: 0 auto 40px;
+    }
+    .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px; border-radius: 999px;
+      background: var(--accent); color: var(--on-accent);
+      font-size: 15px; font-weight: 600; letter-spacing: 0.01em;
+      transition: background .2s, transform .15s, box-shadow .2s;
+      border: none; cursor: pointer;
+    }
+    .btn-primary:hover { background: var(--accent-strong); color: var(--on-accent); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(169,195,173,0.15); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px; border-radius: 999px;
+      background: transparent; color: var(--text);
+      font-size: 15px; font-weight: 500;
+      border: 1px solid var(--outline);
+      transition: border-color .2s, background .2s;
+      cursor: pointer;
+    }
+    .btn-secondary:hover { border-color: var(--muted); background: var(--high); }
+
+    /* ── Platforms pill ── */
+    .platforms {
+      display: flex; gap: 12px; justify-content: center; align-items: center;
+      margin-top: 24px;
+      font-family: var(--font-mono); font-size: 12px; color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .platforms svg { width: 16px; height: 16px; fill: var(--muted); }
+
+    /* ── Floating glow behind hero ── */
+    .hero-glow {
+      position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(169,195,173,0.06) 0%, transparent 70%);
+      pointer-events: none; z-index: -1;
+    }
+
+    /* ── Section headings ── */
+    .section-label {
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: var(--font-serif); font-weight: 400; font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.2; color: var(--text); margin-bottom: 16px;
+    }
+    .section-subtitle {
+      font-size: 17px; color: var(--muted); line-height: 1.7; max-width: 560px;
+    }
+    .section-header { margin-bottom: 64px; }
+
+    /* ── Features grid ── */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    }
+    .feature-card {
+      background: var(--low); border: 1px solid var(--outline); border-radius: var(--radius);
+      padding: 36px 28px; transition: border-color .25s, transform .2s;
+    }
+    .feature-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .feature-icon {
+      width: 44px; height: 44px; border-radius: var(--radius-sm);
+      background: var(--high); display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+    }
+    .feature-icon svg { width: 22px; height: 22px; stroke: var(--accent); fill: none; stroke-width: 1.5; }
+    .feature-card h3 {
+      font-family: var(--font-sans); font-weight: 600; font-size: 16px;
+      color: var(--text); margin-bottom: 10px;
+    }
+    .feature-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* ── Principles / bento ── */
+    .principles-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    }
+    .principle-card {
+      background: var(--low); border: 1px solid var(--outline); border-radius: var(--radius);
+      padding: 44px 36px; position: relative; overflow: hidden;
+    }
+    .principle-card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+      background: var(--accent); opacity: 0; transition: opacity .25s;
+    }
+    .principle-card:hover::before { opacity: 1; }
+    .principle-number {
+      font-family: var(--font-mono); font-size: 12px; color: var(--accent);
+      letter-spacing: 0.1em; margin-bottom: 16px;
+    }
+    .principle-card h3 {
+      font-family: var(--font-serif); font-weight: 400; font-size: 22px;
+      color: var(--text); margin-bottom: 12px;
+    }
+    .principle-card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+    /* ── Keyboard shortcuts showcase ── */
+    .shortcuts-section { background: var(--lowest); border-top: 1px solid var(--outline); border-bottom: 1px solid var(--outline); }
+    .shortcuts-layout { display: flex; gap: 64px; align-items: center; }
+    .shortcuts-info { flex: 1; }
+    .shortcuts-list { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .shortcut-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; background: var(--low); border-radius: var(--radius-sm);
+      border: 1px solid var(--outline);
+    }
+    .shortcut-key {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 36px; padding: 4px 10px;
+      background: var(--high); border: 1px solid var(--outline); border-radius: 6px;
+      font-family: var(--font-mono); font-size: 12px; color: var(--accent);
+      white-space: nowrap;
+    }
+    .shortcut-label { font-size: 13px; color: var(--muted); }
+
+    /* ── Formats strip ── */
+    .formats-section { text-align: center; }
+    .formats-strip {
+      display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+      margin-top: 40px;
+    }
+    .format-tag {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em;
+      color: var(--muted); padding: 8px 18px;
+      background: var(--low); border: 1px solid var(--outline); border-radius: 999px;
+      transition: border-color .2s, color .2s;
+    }
+    .format-tag:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── CTA Section ── */
+    .cta-section { text-align: center; }
+    .cta-card {
+      background: var(--low); border: 1px solid var(--outline); border-radius: 20px;
+      padding: 80px 48px; position: relative; overflow: hidden;
+    }
+    .cta-card::before {
+      content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(169,195,173,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-card h2 {
+      font-family: var(--font-serif); font-weight: 400; font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.2; color: var(--text); margin-bottom: 16px; position: relative;
+    }
+    .cta-card p {
+      font-size: 17px; color: var(--muted); max-width: 480px; margin: 0 auto 40px;
+      line-height: 1.7; position: relative;
+    }
+    .cta-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--outline); padding: 40px 0;
+    }
+    .footer-inner {
+      max-width: var(--max-w); margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-brand { display: flex; align-items: center; gap: 10px; }
+    .footer-brand img { width: 24px; height: 24px; }
+    .footer-brand span { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--muted); }
+    .footer-links a:hover { color: var(--text); }
+
+    /* ── Scroll reveal ── */
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .shortcuts-layout { flex-direction: column; gap: 40px; }
+      .principles-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      :root { --section-gap: 80px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .shortcuts-list { grid-template-columns: 1fr; }
+      .nav-links a:not(.nav-cta) { display: none; }
+      .hero h1 { font-size: 36px; }
+      .cta-card { padding: 48px 24px; }
+    }
+
+    /* ── Reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+      html { scroll-behavior: auto; }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Nav ── -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-brand">
+        <img src="assets/brand/relayn-symbol-sage.svg" alt="" width="32" height="32"/>
+        <span>RelayN</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#formats">Formats</a>
+        <a href="#principles">Philosophy</a>
+        <a href="#download" class="nav-cta">Download</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content reveal">
+      <span class="hero-tag">Universal Local Media Player</span>
+      <h1>Your media.<br/><em>In motion.</em></h1>
+      <p>RelayN Player brings your local audio and video into one focused playback experience — with practical controls, universal codec support, and a calm interface designed for everyday use.</p>
+      <div class="hero-actions">
+        <a href="#download" class="btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download for Free
+        </a>
+        <a href="https://github.com/mihirverma7781/relayn.app" class="btn-secondary" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+          View Source
+        </a>
+      </div>
+      <div class="platforms">
+        <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83"/><path d="M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+        <span>macOS &amp; Windows</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ── -->
+  <section id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-label">Capabilities</p>
+        <h2 class="section-title">Everything you need,<br/>nothing you don't.</h2>
+        <p class="section-subtitle">Built for people who value their media, their privacy, and their time.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
+          <h3>Universal Playback</h3>
+          <p>Plays virtually every audio and video format out of the box. MP4, MKV, FLAC, OGG, AVI, MOV, WebM, WAV, and hundreds more — no codec packs needed.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>Local-First &amp; Private</h3>
+          <p>No accounts, no cloud uploads, no telemetry. Your files stay on your device. RelayN never phones home — your media library is yours alone.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </div>
+          <h3>Precise Controls</h3>
+          <p>Playback speed, audio track selection, subtitle management, seek precision, repeat and shuffle — practical controls at your fingertips.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>Native Performance</h3>
+          <p>Built with Tauri and libVLC for true native video surfaces and hardware-accelerated decoding. Lightweight, fast, and responsive on both Intel and Apple Silicon.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          </div>
+          <h3>Audio &amp; Video Equal</h3>
+          <p>Not a music player with video bolted on. Both audio and video are first-class — with dedicated interfaces, metadata display, and artwork presentation.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <h3>Calm Interface</h3>
+          <p>Modern editorial design with a restrained character. Your media is the hero — the interface stays out of the way while keeping everything discoverable.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Keyboard shortcuts ── -->
+  <section class="shortcuts-section" id="shortcuts">
+    <div class="container">
+      <div class="shortcuts-layout">
+        <div class="shortcuts-info reveal">
+          <p class="section-label">Keyboard-Driven</p>
+          <h2 class="section-title">Designed for<br/>your workflow.</h2>
+          <p class="section-subtitle">Every action is within reach. Navigate, play, and control without leaving the keyboard.</p>
+        </div>
+        <div class="shortcuts-list reveal">
+          <div class="shortcut-item">
+            <span class="shortcut-key">Space</span>
+            <span class="shortcut-label">Play / Pause</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">← →</span>
+            <span class="shortcut-label">Seek ±5s</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">↑ ↓</span>
+            <span class="shortcut-label">Volume</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">F</span>
+            <span class="shortcut-label">Fullscreen</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">M</span>
+            <span class="shortcut-label">Mute</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">⌘ O</span>
+            <span class="shortcut-label">Open File</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">L</span>
+            <span class="shortcut-label">Loop Mode</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">⌘ ,</span>
+            <span class="shortcut-label">Settings</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Formats ── -->
+  <section class="formats-section" id="formats">
+    <div class="container reveal">
+      <p class="section-label">Format Support</p>
+      <h2 class="section-title">Plays everything you throw at it.</h2>
+      <p class="section-subtitle" style="margin: 0 auto;">Powered by libVLC — hundreds of codecs, containers, and protocols supported natively.</p>
+      <div class="formats-strip">
+        <span class="format-tag">MP4</span>
+        <span class="format-tag">MKV</span>
+        <span class="format-tag">AVI</span>
+        <span class="format-tag">MOV</span>
+        <span class="format-tag">WebM</span>
+        <span class="format-tag">FLAC</span>
+        <span class="format-tag">MP3</span>
+        <span class="format-tag">OGG</span>
+        <span class="format-tag">WAV</span>
+        <span class="format-tag">AAC</span>
+        <span class="format-tag">WMA</span>
+        <span class="format-tag">OPUS</span>
+        <span class="format-tag">H.264</span>
+        <span class="format-tag">H.265</span>
+        <span class="format-tag">VP9</span>
+        <span class="format-tag">MPEG-TS</span>
+        <span class="format-tag">M4A</span>
+        <span class="format-tag">3GP</span>
+        <span class="format-tag">FLV</span>
+        <span class="format-tag">WMV</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Principles ── -->
+  <section id="principles">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-label">Philosophy</p>
+        <h2 class="section-title">Built on principles.</h2>
+      </div>
+      <div class="principles-grid">
+        <div class="principle-card reveal">
+          <p class="principle-number">01</p>
+          <h3>The media is the hero</h3>
+          <p>Chrome, controls, and decoration never compete with your content. The interface recedes so your music and movies take center stage.</p>
+        </div>
+        <div class="principle-card reveal">
+          <p class="principle-number">02</p>
+          <h3>Local-first by default</h3>
+          <p>No cloud library, no streaming catalog, no account requirement. Your files, your device, your control — that's the entire premise.</p>
+        </div>
+        <div class="principle-card reveal">
+          <p class="principle-number">03</p>
+          <h3>Power without clutter</h3>
+          <p>Common playback actions are within easy reach. Advanced actions live in clear menus and contextual controls. Nothing is hidden, nothing screams for attention.</p>
+        </div>
+        <div class="principle-card reveal">
+          <p class="principle-number">04</p>
+          <h3>Be honest</h3>
+          <p>No invented features, no inflated performance claims, no misleading privacy guarantees. What you see is what you get — dependable and straightforward.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <section class="cta-section" id="download">
+    <div class="container">
+      <div class="cta-card reveal">
+        <h2>Ready to experience<br/>your media differently?</h2>
+        <p>Download RelayN Player for free. Open source, no account required, no strings attached.</p>
+        <div class="cta-actions">
+          <a href="https://github.com/mihirverma7781/relayn.app/releases" class="btn-primary" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Latest Release
+          </a>
+          <a href="https://github.com/mihirverma7781/relayn.app" class="btn-secondary" target="_blank" rel="noopener">
+            View on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img src="assets/brand/relayn-symbol-sage.svg" alt="" width="24" height="24"/>
+        <span>RelayN Player &copy; 2026</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/mihirverma7781/relayn.app" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/mihirverma7781/relayn.app/releases" target="_blank" rel="noopener">Releases</a>
+        <a href="https://github.com/mihirverma7781/relayn.app/blob/main/README.md" target="_blank" rel="noopener">Docs</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── Scroll reveal ── -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const els = document.querySelectorAll('.reveal');
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+        }, { threshold: 0.15 });
+        els.forEach(el => io.observe(el));
+      } else {
+        els.forEach(el => el.classList.add('visible'));
+      }
+    });
+  </script>
+
+</body>
+</html>
