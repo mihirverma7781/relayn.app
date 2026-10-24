@@ -391,43 +391,68 @@ export function useNativeSurface(player:PlayerController,active=true,covered=fal
  return ref;
 }
 
-export function usePlayerKeys(player:PlayerController,onFullscreen:()=>void,onToggleQueue:()=>void){
- const {stateRef,call,open,fullscreen}=player;
- useEffect(()=>{
-  const handler=(event:KeyboardEvent)=>{
-   if(event.target instanceof HTMLElement&&(['INPUT','SELECT','TEXTAREA'].includes(event.target.tagName)||event.target.isContentEditable||(event.target.tagName==='BUTTON'&&[' ','Enter'].includes(event.key))))return;
-   if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='o'){
-    event.preventDefault();
-    void open(true);
-    return;
-   }
-   if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='l'){
-    event.preventDefault();
-    onToggleQueue();
-    return;
-   }
-   const cmd=shortcut(event.key,event.ctrlKey||event.metaKey,event.shiftKey);
-   if(!cmd)return;
-   event.preventDefault();
-   const {playback:p,settings:s}=stateRef.current;
-   if(cmd==='open'||cmd==='append')void open(cmd==='open');
-   else if(cmd==='fullscreen'||cmd==='exit_fullscreen'){onFullscreen();void fullscreen(cmd==='exit_fullscreen');}
-   else if(cmd.startsWith('seek_')){
-    if(p.seekable)void call('seek',p.duration>0?Math.min(p.duration,Math.max(0,p.time+(cmd==='seek_forward'?10000:-10000))):Math.max(0,p.time+(cmd==='seek_forward'?10000:-10000)));
-   }
-   else if(cmd.startsWith('volume_'))void call('volume',Math.max(0,Math.min(100,s.volume+(cmd==='volume_up'?5:-5))));
-   else if(cmd==='cycle_audio'||cmd==='cycle_subtitle'){
-    const audio=cmd==='cycle_audio',id=nextTrack(audio?p.audio_tracks:p.subtitle_tracks,audio?p.audio_track:p.subtitle_track);
-    if(id!==null)void call(audio?'audio':'subtitle',id);
-   }
-   else if(cmd==='cycle_aspect'){
-    const options=['','16:9','4:3','1:1','21:9'];
-    void call('aspect',undefined,options[(options.indexOf(s.aspect)+1)%options.length]);
-   }
-   else if(cmd==='faster'||cmd==='slower')void call('rate',Math.max(.25,Math.min(4,s.rate+(cmd==='faster'?.25:-.25))));
-   else void call(cmd);
-  };
-  window.addEventListener('keydown',handler);
-  return()=>window.removeEventListener('keydown',handler);
- },[stateRef,call,open,fullscreen,onFullscreen,onToggleQueue]);
+export function usePlayerKeys(
+  player: PlayerController,
+  onFullscreen: () => void,
+  onToggleQueue: () => void,
+  onAction?: (cmd: string) => boolean | void
+) {
+  const {stateRef, call, open, fullscreen} = player;
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (
+        event.target instanceof HTMLElement &&
+        (['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName) ||
+          event.target.isContentEditable ||
+          (event.target.tagName === 'BUTTON' && [' ', 'Enter'].includes(event.key)))
+      )
+        return;
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'o') {
+        event.preventDefault();
+        void open(!event.shiftKey);
+        return;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'l') {
+        event.preventDefault();
+        onToggleQueue();
+        return;
+      }
+
+      const cmd = shortcut(event.key, event.ctrlKey || event.metaKey, event.shiftKey);
+      if (!cmd) return;
+      event.preventDefault();
+
+      if (onAction && onAction(cmd)) {
+        return;
+      }
+
+      const {playback: p, settings: s} = stateRef.current;
+      if (cmd === 'open' || cmd === 'append') void open(cmd === 'open');
+      else if (cmd === 'fullscreen' || cmd === 'exit_fullscreen') {
+        onFullscreen();
+        void fullscreen(cmd === 'exit_fullscreen');
+      } else if (cmd.startsWith('seek_')) {
+        const delta = cmd === 'seek_long_forward' ? 60000 : cmd === 'seek_long_backward' ? -60000 : cmd === 'seek_forward' ? 10000 : -10000;
+        if (p.seekable) void call('seek', Math.max(0, p.duration > 0 ? Math.min(p.duration, p.time + delta) : p.time + delta));
+      } else if (cmd.startsWith('volume_')) {
+        void call('volume', Math.max(0, Math.min(150, s.volume + (cmd === 'volume_up' ? 5 : -5))));
+      } else if (cmd === 'cycle_audio' || cmd === 'cycle_subtitle') {
+        const audio = cmd === 'cycle_audio';
+        const id = nextTrack(audio ? p.audio_tracks : p.subtitle_tracks, audio ? p.audio_track : p.subtitle_track);
+        if (id !== null) void call(audio ? 'audio' : 'subtitle', id);
+      } else if (cmd === 'cycle_aspect') {
+        const options = ['', '16:9', '16:10', '4:3', '1:1', '2.35:1', '2.39:1', '21:9'];
+        void call('aspect', undefined, options[(options.indexOf(s.aspect) + 1) % options.length]);
+      } else if (cmd === 'faster' || cmd === 'slower') {
+        void call('rate', Math.max(0.25, Math.min(4, Math.round((s.rate + (cmd === 'faster' ? 0.25 : -0.25)) * 100) / 100)));
+      } else if (cmd === 'rate_normal') {
+        void call('rate', 1.0);
+      } else {
+        void call(cmd);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [stateRef, call, open, fullscreen, onFullscreen, onToggleQueue, onAction]);
 }

@@ -311,6 +311,32 @@ async fn action(action: Action, engine: State<'_, Shared>) -> Result<(), String>
                 e.saved.playlist.clear();
                 e.saved.current = None;
             }
+            "audio_delay" => {
+                if let Some(v) = &e.vlc {
+                    v.set_audio_delay(number as i64)?;
+                }
+            }
+            "subtitle_delay" => {
+                if let Some(v) = &e.vlc {
+                    v.set_subtitle_delay(number as i64)?;
+                }
+            }
+            "step_frame" => {
+                if let Some(v) = &e.vlc {
+                    v.pause(true);
+                    let cur = v.snapshot().time;
+                    v.seek(cur + 40)?;
+                }
+            }
+            "snapshot" => {
+                let v = e.vlc.as_ref().ok_or("No player")?;
+                let home = std::env::var("HOME").map(PathBuf::from).unwrap_or_else(|_| PathBuf::from("/tmp"));
+                let pictures = home.join("Pictures");
+                let dir = if pictures.is_dir() { pictures } else { home.join("Desktop") };
+                let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+                let target = dir.join(format!("RelayN_Snapshot_{secs}.png"));
+                v.take_snapshot(&target.to_string_lossy())?;
+            }
             "dismiss_error" => {
                 e.error = None;
                 return Ok(());

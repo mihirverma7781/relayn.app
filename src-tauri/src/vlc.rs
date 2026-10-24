@@ -52,7 +52,12 @@ api! {
  libvlc_media_player_add_slave:unsafe extern "C" fn(Ptr,c_int,*const c_char,c_int)->c_int,
  libvlc_video_set_aspect_ratio:unsafe extern "C" fn(Ptr,*const c_char),
  libvlc_video_set_key_input:unsafe extern "C" fn(Ptr,c_int),
- libvlc_video_set_mouse_input:unsafe extern "C" fn(Ptr,c_int)
+ libvlc_video_set_mouse_input:unsafe extern "C" fn(Ptr,c_int),
+ libvlc_audio_get_delay:unsafe extern "C" fn(Ptr)->i64,
+ libvlc_audio_set_delay:unsafe extern "C" fn(Ptr,i64)->c_int,
+ libvlc_video_get_spu_delay:unsafe extern "C" fn(Ptr)->i64,
+ libvlc_video_set_spu_delay:unsafe extern "C" fn(Ptr,i64)->c_int,
+ libvlc_video_take_snapshot:unsafe extern "C" fn(Ptr,c_int,*const c_char,c_int,c_int)->c_int
 }
 #[derive(Clone, Serialize)]
 pub struct Track {
@@ -70,6 +75,8 @@ pub struct Playback {
     pub subtitle_tracks: Vec<Track>,
     pub audio_track: i32,
     pub subtitle_track: i32,
+    pub audio_delay: i64,
+    pub subtitle_delay: i64,
     pub title: String,
     pub artist: String,
     pub album: String,
@@ -170,6 +177,11 @@ impl Vlc {
                 CString::new("--no-metadata-network-access").unwrap(),
                 CString::new("--no-stats").unwrap(),
             ];
+            #[cfg(target_os = "macos")]
+            {
+                args.push(CString::new("--no-videotoolbox").unwrap());
+                args.push(CString::new("--avcodec-hw=none").unwrap());
+            }
             if std::env::var_os("ASTER_TEST_HEADLESS").is_some() {
                 args.push(CString::new("--vout=dummy").unwrap());
                 args.push(CString::new("--aout=dummy").unwrap());
@@ -301,6 +313,36 @@ impl Vlc {
             }
         }
     }
+    pub fn set_audio_delay(&self, delay_ms: i64) -> Result<(), String> {
+        unsafe {
+            // libvlc delay is in microseconds
+            if (self.api.libvlc_audio_set_delay)(self.player, delay_ms * 1000) == 0 {
+                Ok(())
+            } else {
+                Err("Unable to set audio delay".into())
+            }
+        }
+    }
+    pub fn set_subtitle_delay(&self, delay_ms: i64) -> Result<(), String> {
+        unsafe {
+            // libvlc delay is in microseconds
+            if (self.api.libvlc_video_set_spu_delay)(self.player, delay_ms * 1000) == 0 {
+                Ok(())
+            } else {
+                Err("Unable to set subtitle delay".into())
+            }
+        }
+    }
+    pub fn take_snapshot(&self, path: &str) -> Result<(), String> {
+        let p = CString::new(path).map_err(|_| "Invalid snapshot path")?;
+        unsafe {
+            if (self.api.libvlc_video_take_snapshot)(self.player, 0, p.as_ptr(), 0, 0) == 0 {
+                Ok(())
+            } else {
+                Err("Could not capture video snapshot".into())
+            }
+        }
+    }
     unsafe fn tracks(&self, head: *mut TrackDescription) -> Vec<Track> {
         let mut out = Vec::new();
         let mut p = head;
@@ -356,6 +398,8 @@ impl Vlc {
                     .tracks((self.api.libvlc_video_get_spu_description)(self.player)),
                 audio_track: (self.api.libvlc_audio_get_track)(self.player),
                 subtitle_track: (self.api.libvlc_video_get_spu)(self.player),
+                audio_delay: (self.api.libvlc_audio_get_delay)(self.player) / 1000,
+                subtitle_delay: (self.api.libvlc_video_get_spu_delay)(self.player) / 1000,
                 title: self.meta(0),
                 artist: self.meta(1),
                 album: self.meta(4),
