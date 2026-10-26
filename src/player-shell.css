@@ -1,0 +1,388 @@
+.classic-player {
+  background: var(--bg);
+  font-family: "Hanken Grotesk Variable", system-ui, sans-serif;
+  color: var(--text);
+  min-height: 0;
+  overflow: hidden;
+}
+.classic-player .vlc-main-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  background: #080a09;
+  overflow: hidden;
+}
+.classic-player .vlc-dock-wrapper {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-width: none;
+  flex-shrink: 0;
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  margin: 0;
+  pointer-events: auto;
+}
+.classic-player .vlc-player-dock {
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--surface);
+  border-top: 1px solid var(--outline);
+  padding: 10px 14px 8px;
+}
+.classic-player .vlc-dock-controls {
+  gap: 12px;
+  min-width: 0;
+}
+.classic-player .vlc-control-group {
+  gap: 5px;
+  min-width: 0;
+}
+.classic-player .vlc-btn {
+  width: 29px;
+  height: 30px;
+}
+.classic-player .vlc-btn-play {
+  width: 39px;
+  height: 34px;
+  border-radius: 3px;
+}
+.classic-player:not(.advanced-controls)
+  button:is(
+    [aria-label="Next frame"],
+    [aria-label="Bookmarks"],
+    [aria-label="Snapshot"],
+    [aria-label="Jump to Time"]
+  ) {
+  display: none;
+}
+.classic-player .vlc-dock-timeline {
+  padding: 0 0 9px;
+}
+.classic-player .vlc-scrubber-track input {
+  height: 20px;
+  cursor: pointer;
+}
+.classic-player .vlc-scrubber-track {
+  min-width: 0;
+}
+.classic-empty,
+.classic-audio {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 30px;
+  text-align: center;
+  min-height: 0;
+}
+.classic-empty > img {
+  opacity: 0.85;
+  width: 112px;
+  height: 112px;
+}
+.classic-empty > .button {
+  font-size: 13px;
+  padding: 9px 15px;
+  background: var(--low);
+  border: 1px solid var(--outline);
+  color: var(--text);
+}
+.classic-empty > p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: -10px;
+}
+.classic-audio h1 {
+  font:
+    400 24px "Hanken Grotesk Variable",
+    sans-serif;
+  overflow-wrap: anywhere;
+  max-width: 90%;
+}
+.classic-audio p {
+  font-size: 14px;
+  color: var(--muted);
+}
+.classic-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  height: 25px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  background: var(--low);
+  border-top: 1px solid var(--outline);
+  color: var(--muted);
+  font-size: 11px;
+  min-width: 0;
+}
+.classic-status > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.classic-status > span:nth-child(2) {
+  flex: 1;
+}
+.classic-status > span:first-child,
+.classic-status > span:last-child {
+  flex-shrink: 0;
+  max-width: 30%;
+}
+.player-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  background: #422d29;
+  color: #f1c8bf;
+  padding: 10px 15px;
+  font-size: 13px;
+  flex-shrink: 0;
+  max-height: 100px;
+  overflow: auto;
+}
+.player-error span {
+  overflow-wrap: anywhere;
+}
+.player-error button {
+  background: none;
+  border: 0;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+.classic-drop {
+  position: absolute;
+  inset: 15px;
+  border: 2px dashed var(--accent);
+  background: #171a19ed;
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 15;
+  font-size: 20px;
+}
+.classic-dialog {
+  max-width: 650px;
+  width: min(650px, calc(100vw - 40px));
+  max-height: calc(100vh - 60px);
+  overflow: auto;
+  border: 1px solid var(--outline);
+  border-radius: 4px;
+  background: var(--surface);
+}
+.classic-dialog .dialog-header h2 {
+  font:
+    600 17px "Hanken Grotesk Variable",
+    sans-serif;
+  letter-spacing: 0;
+  margin: 0;
+}
+.classic-info {
+  margin: 0;
+}
+.classic-info > div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.classic-info dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+.classic-info dd {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.classic-preferences {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.classic-preferences label {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  justify-content: space-between;
+  font-size: 14px;
+}
+.classic-preferences input {
+  flex: 1;
+  max-width: 280px;
+}
+.classic-preferences select {
+  min-width: 150px;
+}
+.preferences-note {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 20px 0;
+}
+.classic-dialog h3 {
+  font:
+    600 14px "Hanken Grotesk Variable",
+    sans-serif;
+  margin: 22px 0 10px;
+}
+.classic-shortcuts > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.classic-shortcuts kbd {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.classic-about {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 18px;
+  padding: 15px;
+}
+.classic-about h2 {
+  font:
+    600 22px "Hanken Grotesk Variable",
+    sans-serif;
+}
+.classic-about p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.network-label {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+}
+.network-label input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--outline);
+  background: var(--lowest);
+  color: var(--text);
+}
+.classic-player .modal-backdrop {
+  backdrop-filter: none;
+}
+.classic-player .vlc-video-stage,
+.classic-player .native-video-box {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  inset: auto;
+  min-height: 0;
+}
+.classic-player .html-video-element {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.classic-player .playlist-row.is-selected {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+  background: var(--high);
+}
+.bookmark-seek {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: none;
+  color: inherit;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  border: 0;
+  padding: 5px;
+  cursor: pointer;
+}
+.bookmark-seek .bookmark-label {
+  overflow-wrap: anywhere;
+}
+.classic-player .playlist-toolbar {
+  height: auto;
+  min-height: 58px;
+  flex-shrink: 0;
+  padding: 12px 20px;
+}
+.classic-player .playlist-title-area {
+  min-width: 180px;
+}
+.classic-player .effects-dialog .eq-topbar {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.classic-player .effects-dialog .equalizer-grid {
+  overflow-x: auto;
+}
+.classic-player .vlc-popover-menu {
+  max-height: 50vh;
+  overflow: auto;
+}
+.classic-player .playlist-toolbar {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.classic-player .playlist-actions-group {
+  flex-wrap: wrap;
+}
+.classic-player .playlist-table-container {
+  min-height: 0;
+}
+.classic-player .playlist-empty-state h3 {
+  font-family: inherit;
+  font-size: 20px;
+}
+.classic-player .vlc-playlist-view {
+  background: var(--bg);
+}
+@media (max-width: 1000px) {
+  .classic-player .vlc-player-dock {
+    padding-inline: 8px;
+  }
+  .classic-player .vlc-control-group {
+    gap: 2px;
+  }
+  .classic-player .vlc-btn {
+    width: 26px;
+  }
+  .classic-player .group-center {
+    max-width: 170px;
+  }
+  .classic-player .vlc-dock-controls {
+    gap: 5px;
+  }
+  .classic-status {
+    font-size: 10px;
+  }
+  .classic-player .vlc-current-title {
+    max-width: 110px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .classic-player * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

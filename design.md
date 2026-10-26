@@ -4,9 +4,9 @@ This is the design reference for future UI work. Read it before changing screens
 
 ## Direction
 
-RelayN Player is a dependable, thoughtfully designed desktop home for media users already own. Keep the interface precise, calm, local-first, editorial, and media-first. Audio and video are equal. The Stitch-inspired serif and monospace hierarchy is retained as an intentional visual treatment, with bundled fonts loaded offline.
+RelayN Player is a dependable native player for local audio/video and explicitly opened network streams. The user requested VLC-compatible desktop workflows on 2026-10-26, superseding the earlier four-view editorial shell. Keep the approved RelayN identity, muted colors and bundled fonts; use compact readable UI text for controls. The video and familiar command flow take priority over decorative content.
 
-Use `RelayN` for compact branding and `RelayN Player` for the full product name. The Stitch reference's Atelier identity, demo films, albums, counts, and technical readouts are not application data. Do not claim streaming, cloud, or library-indexing features.
+Use `RelayN` for compact branding and `RelayN Player` for the full product name. The Stitch reference's Atelier identity, demo films, albums, counts, and technical readouts are not application data. Only claim implemented protocols and functions. HTTP/HTTPS/RTSP opening is explicit; cloud libraries and indexing remain unavailable.
 
 ## Brand identity and technical continuity
 
@@ -71,40 +71,21 @@ Use serif display type for hierarchy, not for every label. Truncate long filenam
 - Prefer Lucide line icons with consistent optical size. Important icon actions need accessible names and visible focus rings.
 - Original CSS/SVG artwork can represent files without artwork: a restrained landscape for video and a record sleeve for audio. These are generic artwork, not extracted thumbnails, album covers or playback visualizers. Never suggest they came from the file.
 
-## Application shell
+## Application shell and VLC-compatible workflows
 
-The shell is persistent across four views:
+The current shell is menu-first: Media, Playback, Audio, Video, Subtitle, Tools, View and Help, above a central native playback stage. A full-width dock and compact status strip remain visible in normal windows. The previous Home/Library/Video/Audio navigation is historical and is not the current application shell.
 
-1. Compact top bar: RelayN identity, Home / Library / Video / Audio navigation, collection search, open-file action, inspector and settings.
-2. Recessed status strip: real playback-engine status and real collection counts.
-3. Flexible central workspace with contained scrolling where needed.
-4. Persistent bottom playback dock: current file, play/pause, previous/next, ±10-second seek, timeline, speed, queue, volume/mute and fullscreen. A compact secondary row holds audio/subtitle selection, external subtitles, aspect ratio, repeat and stop.
+- Empty state: approved N mark, Open media button and drop instruction. Avoid decorative pseudo-meters or fictitious format promises.
+- Playlist: View > Playlist / Ctrl+L switches between the stage and a native-owned queue. Single click selects; double click or Enter plays. Arrow/Home/End navigate, Delete removes and Alt+Up/Down reorders. Search filters without changing the underlying order. Add files/folder, export, reorder, shuffle and repeat are real operations.
+- Media: Open File, Open Multiple Files, recursive Open Folder and explicit Open Network Stream. User-entered HTTP/HTTPS/RTSP URLs contact the requested host; embedded credentials are rejected and query strings are saved in the queue. No automatic remote discovery.
+- Playback: native state is authoritative for shuffle, A/B loop, crop, effects, EQ, audio channels, chapters and frame advance. If a native operation fails, show the actionable error. Do not simulate success in React or CSS.
+- Effects: ten libVLC frequency bands and preamp, native brightness/contrast/saturation/gamma/hue and audio/subtitle synchronization. Unsupported color inversion is not exposed. Changing an effect must change native output, not only a placeholder's style.
+- Video: fullscreen, always on top, supported aspect/crop ratios and snapshot through a native Save PNG dialog. Canceling a dialog is not a saved-file success. Controls remain outside the native drawable.
+- Tools: Media Information, per-file bookmarks, Jump to Time and Preferences. Preferences includes real saved volume, rate and repeat controls and a shortcut reference.
+- Menus implement roving focus, arrow navigation, Alt mnemonics, Escape, checked states and disabled unavailable actions. Hide the native video while a menu, popover, modal or drag overlay covers the stage.
+- Shared dialogs use useDialog for focus containment/restoration and Escape. Playback shortcuts must not fire while a dialog or editable control owns input.
 
-Do not add decorative macOS traffic-light buttons on Windows. The operating system provides the real window frame. Avoid duplicate global Play/Pause controls with identical accessible labels; secondary session actions use distinct labels.
-
-## View patterns
-
-### Home
-
-Use an editorial heading, a two-column current-session region, then a compact collection section. The native stage/empty-state art occupies the larger column. The adjoining editorial console shows the selected file, real available metadata, state, duration and queue count. The lower section contains actual queued files or an honest invitation to add media.
-
-Do not seed the library with reference movies, fictitious albums, fake progress or fictional recently watched items.
-
-### Library
-
-Use a title/action row; All media / Films & video / Audio filters with derived counts; list/grid controls and sorting; a collection index with a selected-file inspector. List rows show the filename/title, extension and location. Grid cards use the same artwork and card vocabulary as Home.
-
-Selecting a list row inspects it; the explicit play action begins playback. Search, filters, sorting and view toggles must work. Inspecting a file that is not playing must not display the current file's artist, album, duration or track counts as if they belong to it. File type inferred from an extension must not be labeled as a verified codec.
-
-The current library is the persisted local play queue. Do not imply background folder indexing, mounted-volume scanning, smart collections or a separate database unless those features are implemented.
-
-### Video
-
-Give the native video the largest available area. Use a small screening-room header with a back action and open-file control, compact status/timecode boundaries, and the shared playback dock. Keep controls outside the native drawable. With no media, show the established empty-state art and an actionable open-file prompt.
-
-### Audio
-
-Follow the reference's record-sleeve/editorial split with a queue to the right. Use actual title/artist/album when available and a small fact grid of supported values such as file extension, playback speed, volume and available audio tracks. Do not invent sample rate, bit depth, LUFS, bit-perfect output, channel meters, ReplayGain or hardware-routing statistics.
+The palette, approved assets and offline typography above remain authoritative. Historical Stitch references may guide tone, but do not restore the removed editorial layouts unless the user explicitly asks.
 
 ## Native playback constraints
 
@@ -127,15 +108,7 @@ These rules are essential, not cosmetic:
 - Text inputs retain normal editing shortcuts. Ctrl/Cmd+K focuses collection search; playback shortcuts remain available elsewhere without double-triggering Space on focused buttons.
 - Errors are actionable and use `role="alert"`. Normal empty states explain how to add files.
 - Respect `prefers-reduced-motion`. All animations and transitions are disabled under user reduced motion preference.
-- Motion and micro-interaction extensions:
-  - **Celestial stage**: Slow orbital rotation on idle rings (`.orbit-one`, `.orbit-two`, `.orbit-three`) with glowing satellite nodes and animated equalizer bars in the central emblem.
-  - **Interactive stage parallax**: Responsive cursor depth effect on the empty stage canvas.
-  - **Tactile session cards**: Vinyl record slide-out on card hover with concentric groove reflections, and smooth continuous rotation during active playback.
-  - **Landing feature exploration**: Interactive pillar chips (`LOCAL FIRST`, `UNIVERSAL CODECS`, `RESTRAINED FOCUS`, `SMART CONTINUITY`) with live explanation cards and dedicated workspace tour modal.
-  - **Interactive shortcut tester**: Live keypress illumination on keyboard shortcut rows in settings.
-  - **Engine indicators**: Radar pulse on the live status dot and mini-spectrum soundbars in the status strip during playback.
-  - **View transitions**: Calm 250ms editorial fade and translate (`view-enter`).
-  - **Web preview fallback**: Browser file selection and preview playback for web environments, preserving libVLC for Tauri desktop.
+- Normal playback has no decorative animations. Browser preview is explicitly identified and is not evidence of native codec support.
 
 ## Responsive desktop behavior
 
@@ -165,3 +138,11 @@ Do not rely on the reference's 2560 px screenshots as fixed application dimensio
 - `src/media.ts`: filename/type/folder presentation helpers.
 - `src/player.ts`: transport types, initial state, formatting and shortcut helpers.
 - `src-tauri/src/`: native playback engine; preserve its ownership and resource lifecycle.
+
+## Current implementation additions
+
+- `src/player-shell.css`: compact player shell and minimum-size rules.
+- `src/components/PlayerMenu.tsx` / `player-menu.css`: accessible desktop command menus.
+- `src/components/PlayerDialog.tsx` / `useDialog.ts`: shared dialog behavior.
+- `src/components/PlaylistView.tsx`: queue selection, keyboard navigation, editing and file actions.
+- `docs/VLC_PARITY.md`: evidence, implemented capabilities, verification and remaining VLC subsystems.

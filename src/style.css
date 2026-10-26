@@ -1747,7 +1747,7 @@ kbd {
   background: rgba(18, 20, 26, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(61, 250, 194, 0.3);
+  border: 1px solid rgba(169, 195, 173, 0.3);
   color: #fff;
   padding: 8px 20px;
   border-radius: 999px;
@@ -1779,17 +1779,17 @@ kbd {
   z-index: 4;
 }
 .loop-point-marker.marker-a {
-  background: #3dfac2;
-  box-shadow: 0 0 8px rgba(61, 250, 194, 0.8);
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(169, 195, 173, 0.8);
 }
 .loop-point-marker.marker-b {
   background: #f59e0b;
   box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
 }
 .loop-ab-btn.active {
-  color: #3dfac2;
-  background: rgba(61, 250, 194, 0.12);
-  border-color: rgba(61, 250, 194, 0.3);
+  color: var(--accent);
+  background: rgba(169, 195, 173, 0.12);
+  border-color: rgba(169, 195, 173, 0.3);
 }
 .ab-badge {
   font-size: 9px;
@@ -1941,7 +1941,7 @@ kbd {
   margin: 0;
 }
 .dialog-icon {
-  color: #3dfac2;
+  color: var(--accent);
 }
 .dialog-content {
   padding: 20px;
@@ -1977,9 +1977,9 @@ kbd {
   background: rgba(255, 255, 255, 0.02);
 }
 .effects-tab-button.active {
-  color: #3dfac2;
-  border-bottom-color: #3dfac2;
-  background: rgba(61, 250, 194, 0.04);
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: rgba(169, 195, 173, 0.04);
 }
 
 /* Graphic Equalizer Grid */
@@ -2022,7 +2022,7 @@ kbd {
 }
 .eq-db {
   font-size: 10px;
-  color: #3dfac2;
+  color: var(--accent);
   height: 14px;
 }
 .eq-range-wrapper {
@@ -2036,7 +2036,7 @@ kbd {
   direction: rtl;
   width: 14px;
   height: 120px;
-  accent-color: #3dfac2;
+  accent-color: var(--accent);
   cursor: pointer;
 }
 .eq-freq {
@@ -2062,10 +2062,10 @@ kbd {
   color: var(--text);
 }
 .control-label .value {
-  color: #3dfac2;
+  color: var(--accent);
 }
 .control-row input[type="range"] {
-  accent-color: #3dfac2;
+  accent-color: var(--accent);
   cursor: pointer;
 }
 .video-actions-row {
@@ -2109,7 +2109,7 @@ kbd {
   margin: 0;
 }
 .sync-value {
-  color: #3dfac2;
+  color: var(--accent);
   font-size: 13px;
   font-weight: 600;
 }
@@ -2125,7 +2125,7 @@ kbd {
 }
 .sync-controls input[type="range"] {
   flex: 1;
-  accent-color: #3dfac2;
+  accent-color: var(--accent);
 }
 
 /* Jump to Time Modal */
@@ -2135,7 +2135,7 @@ kbd {
   margin: 0;
 }
 .jump-hint code {
-  color: #3dfac2;
+  color: var(--accent);
   background: var(--lowest);
   padding: 2px 5px;
   border-radius: 3px;
@@ -2156,8 +2156,8 @@ kbd {
   outline: none;
 }
 .jump-input:focus {
-  border-color: #3dfac2;
-  box-shadow: 0 0 0 2px rgba(61, 250, 194, 0.2);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(169, 195, 173, 0.2);
 }
 .jump-error {
   font-size: 11px;
@@ -2187,8 +2187,8 @@ kbd {
   transition: all 0.15s ease;
 }
 .chip-btn:hover {
-  color: #3dfac2;
-  border-color: #3dfac2;
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 /* Bookmarks Modal */
@@ -2207,7 +2207,7 @@ kbd {
   outline: none;
 }
 .bookmark-input:focus {
-  border-color: #3dfac2;
+  border-color: var(--accent);
 }
 .bookmarks-list {
   display: flex;
@@ -2229,15 +2229,15 @@ kbd {
   transition: all 0.15s ease;
 }
 .bookmark-item:hover {
-  border-color: #3dfac2;
-  background: rgba(61, 250, 194, 0.03);
+  border-color: var(--accent);
+  background: rgba(169, 195, 173, 0.03);
 }
 .bookmark-time-badge {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(61, 250, 194, 0.15);
-  color: #3dfac2;
+  background: rgba(169, 195, 173, 0.15);
+  color: var(--accent);
   padding: 3px 8px;
   border-radius: 4px;
   font-size: 11px;

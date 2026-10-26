@@ -1,650 +1,873 @@
-import brandSymbol from '../assets/brand/relayn-symbol-sage.svg';
-import {useEffect, useRef, useState, useMemo, useCallback} from 'react';
-import {
-  Disc3,
-  FolderOpen,
-  Info,
-  ListMusic,
-  Settings2,
-  Sliders,
-  X
-} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { FolderOpen, X } from "lucide-react";
+import brandSymbol from "../assets/brand/relayn-symbol-sage.svg";
 import {
   formatTime,
   initialVideoAdjustments,
   EQUALIZER_PRESETS,
+  type Bookmark,
   type VideoAdjustments,
-  type Bookmark
-} from './player';
-import {extension, mediaKind, mediaTitle, parentFolder} from './media';
-import {useNativeSurface, usePlayer, usePlayerKeys, webObjectUrls} from './usePlayer';
-import Transport from './components/Transport';
-import PlaylistView from './components/PlaylistView';
-import {IdleArtwork, MediaArtwork} from './components/Artwork';
-import EffectsModal from './components/EffectsModal';
-import JumpModal from './components/JumpModal';
-import BookmarksModal from './components/BookmarksModal';
-import HudToast from './components/HudToast';
+} from "./player";
+import { mediaKind, mediaTitle } from "./media";
+import {
+  useNativeSurface,
+  usePlayer,
+  usePlayerKeys,
+  webObjectUrls,
+} from "./usePlayer";
+import Transport from "./components/Transport";
+import PlaylistView from "./components/PlaylistView";
+import EffectsModal from "./components/EffectsModal";
+import JumpModal from "./components/JumpModal";
+import BookmarksModal from "./components/BookmarksModal";
+import HudToast from "./components/HudToast";
+import PlayerDialog from "./components/PlayerDialog";
+import PlayerMenu from "./components/PlayerMenu";
+import "./player-shell.css";
 
-type Panel = 'settings' | 'info' | 'effects' | 'jump' | 'bookmarks' | null;
-
+type Panel =
+  | "settings"
+  | "info"
+  | "effects"
+  | "jump"
+  | "bookmarks"
+  | "about"
+  | "network"
+  | null;
 export default function App() {
   const player = usePlayer();
-  const {state, call, open, fullscreen, dragging} = player;
-  const {playback: p, settings: s} = state;
-  const current = s.playlist.find(i => i.id === s.current);
-  const isAudio = current ? mediaKind(current.name) === 'audio' : false;
-  const isPlaying = p.state === 'playing';
-
-  // Primary view mode: 'video' (default cinema) or 'playlist' (VLC media library mode)
-  const [viewMode, setViewMode] = useState<'video' | 'playlist'>('video');
-
-  // Dialog panels
+  const { state, call, open, fullscreen } = player;
+  const { playback: p, settings: s } = state;
+  const current = s.playlist.find((item) => item.id === s.current);
+  const audio = !!current && mediaKind(current.name) === "audio";
+  const [view, setView] = useState<"video" | "playlist">("video");
   const [panel, setPanel] = useState<Panel>(null);
-
-  // Auto-hiding controls overlay
-  const [showControls, setShowControls] = useState(true);
-  const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const webVideoRef = useRef<HTMLVideoElement | null>(null);
-
-  // VLC Features State
-  const [loopA, setLoopA] = useState<number | null>(null);
-  const [loopB, setLoopB] = useState<number | null>(null);
-  const [audioDelay, setAudioDelay] = useState(0);
-  const [subDelay, setSubDelay] = useState(0);
-  const [adjustments, setAdjustments] = useState<VideoAdjustments>(initialVideoAdjustments);
-  const [equalizerPreset, setEqualizerPreset] = useState<string>('flat');
-  const [equalizerBands, setEqualizerBands] = useState<number[]>([...EQUALIZER_PRESETS.flat.bands]);
-  const [cropRatio, setCropRatio] = useState<string>('none');
-  const [shuffle, setShuffle] = useState(false);
-  const [hudMessage, setHudMessage] = useState<string | null>(null);
-
-  // Bookmarks stored in localStorage
-  const [allBookmarks, setAllBookmarks] = useState<Record<string, Bookmark[]>>(() => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [advanced, setAdvanced] = useState(false);
+  const [hud, setHud] = useState<string | null>(null);
+  const [network, setNetwork] = useState("");
+  const [equalizerPreset, setEqualizerPreset] = useState("custom");
+  const [alwaysOnTop, setAlwaysOnTop] = useState(false);
+  const [bookmarks, setBookmarks] = useState<Record<string, Bookmark[]>>(() => {
     try {
-      const saved = localStorage.getItem('relayn_bookmarks');
-      return saved ? JSON.parse(saved) : {};
+      const value = JSON.parse(
+        localStorage.getItem("relayn_bookmarks") || "{}",
+      );
+      return value && typeof value === "object" && !Array.isArray(value)
+        ? value
+        : {};
     } catch {
       return {};
     }
   });
-
-  const currentBookmarks = useMemo(() => {
-    return (current?.path && allBookmarks[current.path]) || [];
-  }, [allBookmarks, current?.path]);
-
-  const addBookmark = useCallback((timeMs: number, label: string) => {
-    if (!current?.path) return;
-    const item: Bookmark = {
-      id: Math.random().toString(36).substring(2, 9),
-      time: timeMs,
-      label
-    };
-    setAllBookmarks(prev => {
-      const updated = {
-        ...prev,
-        [current.path]: [...(prev[current.path] || []), item].sort((a, b) => a.time - b.time)
-      };
-      try {
-        localStorage.setItem('relayn_bookmarks', JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
-    setHudMessage(`Bookmark added at ${formatTime(timeMs)}`);
-  }, [current?.path]);
-
-  const deleteBookmark = useCallback((id: string) => {
-    if (!current?.path) return;
-    setAllBookmarks(prev => {
-      const updated = {
-        ...prev,
-        [current.path]: (prev[current.path] || []).filter(b => b.id !== id)
-      };
-      try {
-        localStorage.setItem('relayn_bookmarks', JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
-  }, [current?.path]);
-
-  // A-B Loop handler
-  const handleToggleAbLoop = useCallback(() => {
-    if (loopA === null) {
-      setLoopA(p.time);
-      setHudMessage(`A-B Loop: Point A set (${formatTime(p.time)})`);
-    } else if (loopB === null) {
-      const bTime = Math.max(loopA + 500, p.time);
-      setLoopB(bTime);
-      setHudMessage(`A-B Loop: Active (${formatTime(loopA)} → ${formatTime(bTime)})`);
-    } else {
-      setLoopA(null);
-      setLoopB(null);
-      setHudMessage('A-B Loop: Cleared');
-    }
-  }, [loopA, loopB, p.time]);
-
-  // Enforce A-B loop boundary
-  useEffect(() => {
-    if (loopA !== null && loopB !== null && loopB > loopA) {
-      if (p.time >= loopB) {
-        void call('seek', loopA);
-      }
-    }
-  }, [p.time, loopA, loopB, call]);
-
-  // Clear loop on track change
-  useEffect(() => {
-    setLoopA(null);
-    setLoopB(null);
-  }, [s.current]);
-
-  // Snapshot handler
-  const handleSnapshot = useCallback(async () => {
-    try {
-      await call('snapshot');
-      setHudMessage('Snapshot captured to Pictures');
-    } catch {
-      setHudMessage('Snapshot saved');
-    }
-  }, [call]);
-
-  // Frame step handler
-  const handleStepFrame = useCallback(() => {
-    void call('step_frame');
-    setHudMessage('Frame Step Forward');
-  }, [call]);
-
-  // Audio delay change
-  const handleAudioDelayChange = useCallback((val: number) => {
-    setAudioDelay(val);
-    void call('audio_delay', val);
-    setHudMessage(`Audio Delay: ${val > 0 ? `+${val}` : val} ms`);
-  }, [call]);
-
-  // Subtitle delay change
-  const handleSubDelayChange = useCallback((val: number) => {
-    setSubDelay(val);
-    void call('subtitle_delay', val);
-    setHudMessage(`Subtitle Delay: ${val > 0 ? `+${val}` : val} ms`);
-  }, [call]);
-
-  // Toggle View Mode (Video vs. Playlist)
-  const handleToggleViewMode = useCallback(() => {
-    setViewMode(prev => prev === 'video' ? 'playlist' : 'video');
-  }, []);
-
-  // Keyboard shortcut command dispatcher
-  const handleCustomAction = useCallback((cmd: string): boolean => {
-    if (cmd === 'toggle_ab_loop') {
-      handleToggleAbLoop();
-      return true;
-    }
-    if (cmd === 'step_frame') {
-      handleStepFrame();
-      return true;
-    }
-    if (cmd === 'snapshot') {
-      void handleSnapshot();
-      return true;
-    }
-    if (cmd === 'jump_to_time') {
-      setPanel('jump');
-      return true;
-    }
-    if (cmd === 'toggle_bookmarks') {
-      setPanel(prev => prev === 'bookmarks' ? null : 'bookmarks');
-      return true;
-    }
-    if (cmd === 'toggle_effects') {
-      setPanel(prev => prev === 'effects' ? null : 'effects');
-      return true;
-    }
-    if (cmd === 'audio_delay_down') {
-      handleAudioDelayChange(audioDelay - 50);
-      return true;
-    }
-    if (cmd === 'audio_delay_up') {
-      handleAudioDelayChange(audioDelay + 50);
-      return true;
-    }
-    if (cmd === 'subtitle_delay_down') {
-      handleSubDelayChange(subDelay - 50);
-      return true;
-    }
-    if (cmd === 'subtitle_delay_up') {
-      handleSubDelayChange(subDelay + 50);
-      return true;
-    }
-    if (cmd === 'cycle_crop') {
-      const crops = ['none', 'fill', '16:9', '4:3', '2.35:1'];
-      const next = crops[(crops.indexOf(cropRatio) + 1) % crops.length];
-      setCropRatio(next);
-      setHudMessage(`Crop: ${next}`);
-      return true;
-    }
-    return false;
-  }, [
-    handleToggleAbLoop,
-    handleStepFrame,
-    handleSnapshot,
-    audioDelay,
-    handleAudioDelayChange,
-    subDelay,
-    handleSubDelayChange,
-    cropRatio
-  ]);
-
-  // Native video surface active condition:
-  // Active only when in 'video' mode, not audio, and not covered by full modal dialog
-  const isCovered = panel !== null;
-  const isSurfaceActive = viewMode === 'video' && !isAudio && !!current;
-  const videoRef = useNativeSurface(player, isSurfaceActive, isCovered);
-
-  // Keyboard shortcuts
-  usePlayerKeys(
+  const videoRef = useNativeSurface(
     player,
-    () => void fullscreen(),
-    handleToggleViewMode,
-    handleCustomAction
+    view === "video" && !audio && !!current,
+    !!panel || menuOpen || popoverOpen || player.dragging,
   );
-
-  // Sync web video element with fallback
+  const webVideo = useRef<HTMLVideoElement>(null);
+  const close = useCallback(() => setPanel(null), []);
+  const toggleView = useCallback(
+    () => setView((v) => (v === "video" ? "playlist" : "video")),
+    [],
+  );
+  const loopA = state.loop_a ?? null,
+    loopB = state.loop_b ?? null;
+  const adjustments = s.video_adjustments || initialVideoAdjustments;
+  const eq = s.equalizer || {
+    enabled: false,
+    bands: EQUALIZER_PRESETS.flat.bands,
+    preamp: 0,
+  };
+  const crop = s.crop || "none";
+  const delay = p.audio_delay ?? 0,
+    subDelay = p.subtitle_delay ?? 0;
+  const currentBookmarks = useMemo(() => {
+    const entries = current ? bookmarks[current.path] : [];
+    return Array.isArray(entries)
+      ? entries.filter(
+          (b) =>
+            b &&
+            typeof b.id === "string" &&
+            typeof b.label === "string" &&
+            Number.isFinite(b.time) &&
+            b.time >= 0,
+        )
+      : [];
+  }, [bookmarks, current]);
   useEffect(() => {
-    if (!player.native && webVideoRef.current) {
-      player.setWebVideoRef(webVideoRef.current);
-    }
-  }, [player.native, player.setWebVideoRef, current]);
-
-  // Mouse activity auto-hiding for cinema mode
-  const handleMouseMove = () => {
-    setShowControls(true);
-    if (controlsTimer.current) clearTimeout(controlsTimer.current);
-    if (isPlaying && viewMode === 'video' && !isAudio && panel === null) {
-      controlsTimer.current = setTimeout(() => {
-        setShowControls(false);
-      }, 2500);
-    }
-  };
-
-  const togglePlayback = () => {
-    if (!current) {
-      void open(true);
-    } else {
-      void call('toggle');
-    }
-  };
-
-  // Video adjustments filter style
-  const videoFilterStyle = useMemo(() => {
-    const filters = [
-      `brightness(${1 + adjustments.brightness / 100})`,
-      `contrast(${adjustments.contrast / 100})`,
-      `saturate(${adjustments.saturation / 100})`,
-      `hue-rotate(${adjustments.hue}deg)`
-    ];
-    if (adjustments.invert) filters.push('invert(1)');
-    return {
-      filter: filters.join(' ')
+    if (!player.native && webVideo.current)
+      player.setWebVideoRef(webVideo.current);
+  }, [player.native, player.setWebVideoRef, current?.id]);
+  useEffect(() => {
+    if (!player.native) return;
+    let disposed = false;
+    let stop: (() => void) | undefined;
+    void listen("video-double-click", () => void fullscreen())
+      .then((unlisten) => {
+        if (disposed) unlisten();
+        else stop = unlisten;
+      })
+      .catch(player.report);
+    return () => {
+      disposed = true;
+      stop?.();
     };
-  }, [adjustments]);
-
+  }, [player.native, fullscreen, player.report]);
+  useEffect(() => {
+    if (!player.native) return;
+    void getCurrentWindow()
+      .setTitle(
+        current
+          ? `${mediaTitle(p.title || current.name)} — RelayN Player`
+          : "RelayN Player",
+      )
+      .catch(player.report);
+  }, [current?.name, p.title, player.native, player.report]);
+  const perform = useCallback(
+    async (kind: string, value?: number, text?: string) => {
+      return await call(kind, value, text);
+    },
+    [call],
+  );
+  const snapshot = useCallback(async () => {
+    await perform("snapshot");
+  }, [perform]);
+  const setCrop = useCallback(
+    (value: string) => {
+      void perform("crop", undefined, value);
+    },
+    [perform],
+  );
+  const setAudioDelay = useCallback(
+    (value: number) => {
+      void perform("audio_delay", value);
+    },
+    [perform],
+  );
+  const setSubtitleDelay = useCallback(
+    (value: number) => {
+      void perform("subtitle_delay", value);
+    },
+    [perform],
+  );
+  const setVideoAdjustments: React.Dispatch<
+    React.SetStateAction<VideoAdjustments>
+  > = (value) => {
+    const next = typeof value === "function" ? value(adjustments) : value;
+    void perform("video_adjustments", undefined, JSON.stringify(next));
+  };
+  const setBands = (bands: number[]) => {
+    void perform(
+      "equalizer",
+      undefined,
+      JSON.stringify({ ...eq, enabled: true, bands }),
+    );
+  };
+  const openFolder = useCallback(async () => {
+    if (!player.native) {
+      player.report("Open Folder is available in the desktop application.");
+      return;
+    }
+    try {
+      await invoke("open_folder", { replace: true });
+    } catch (error) {
+      player.report(error);
+    }
+  }, [player.native, player.report]);
+  const setTop = async () => {
+    if (!player.native) return;
+    try {
+      const next = !alwaysOnTop;
+      await getCurrentWindow().setAlwaysOnTop(next);
+      setAlwaysOnTop(next);
+    } catch (error) {
+      player.report(error);
+    }
+  };
+  const custom = useCallback(
+    (command: string) => {
+      switch (command) {
+        case "close_dialog":
+          close();
+          return true;
+        case "quit":
+          if (player.native)
+            void getCurrentWindow().close().catch(player.report);
+          return true;
+        case "preferences":
+        case "toggle_settings":
+          setPanel("settings");
+          return true;
+        case "media_info":
+          setPanel("info");
+          return true;
+        case "open_folder":
+          void openFolder();
+          return true;
+        case "open_network":
+          setPanel("network");
+          return true;
+        case "save_playlist":
+          void player.exportList();
+          return true;
+        case "toggle_ab_loop":
+          void perform("ab_loop");
+          return true;
+        case "step_frame":
+          void perform("step_frame");
+          return true;
+        case "snapshot":
+          void snapshot();
+          return true;
+        case "jump_to_time":
+          setPanel("jump");
+          return true;
+        case "toggle_bookmarks":
+          setPanel("bookmarks");
+          return true;
+        case "toggle_effects":
+          setPanel("effects");
+          return true;
+        case "audio_delay_down":
+          setAudioDelay(delay - 50);
+          return true;
+        case "audio_delay_up":
+          setAudioDelay(delay + 50);
+          return true;
+        case "subtitle_delay_down":
+          setSubtitleDelay(subDelay - 50);
+          return true;
+        case "subtitle_delay_up":
+          setSubtitleDelay(subDelay + 50);
+          return true;
+        case "cycle_crop": {
+          const values = ["none", "16:9", "4:3", "2.35:1"];
+          setCrop(values[(values.indexOf(crop) + 1) % values.length]);
+          return true;
+        }
+        default:
+          return false;
+      }
+    },
+    [
+      close,
+      openFolder,
+      perform,
+      snapshot,
+      delay,
+      subDelay,
+      crop,
+      setCrop,
+      setAudioDelay,
+      setSubtitleDelay,
+      player.exportList,
+    ],
+  );
+  usePlayerKeys(player, () => {}, toggleView, custom);
+  const item = (
+    label: string,
+    action: () => void,
+    shortcut?: string,
+    disabled = false,
+    checked?: boolean,
+  ) => ({ label, action, shortcut, disabled, checked });
+  const separator = { label: "", separator: true };
+  const menus = [
+    {
+      label: "Media",
+      items: [
+        item("Open File…", () => void open(true), "Ctrl+O"),
+        item("Open Multiple Files…", () => void open(false), "Ctrl+Shift+O"),
+        item("Open Folder…", () => void openFolder(), "Ctrl+F", !player.native),
+        item(
+          "Open Network Stream…",
+          () => setPanel("network"),
+          "Ctrl+N",
+          !player.native,
+        ),
+        separator,
+        item(
+          "Save Playlist to File…",
+          () => void player.exportList(),
+          "Ctrl+Y",
+          !s.playlist.length,
+        ),
+        separator,
+        item(
+          "Quit",
+          () => {
+            if (player.native)
+              void getCurrentWindow().close().catch(player.report);
+          },
+          "Ctrl+Q",
+          !player.native,
+        ),
+      ],
+    },
+    {
+      label: "Playback",
+      items: [
+        item(
+          p.state === "playing" ? "Pause" : "Play",
+          () => {
+            if (current) void call("toggle");
+            else void open(true);
+          },
+          "Space",
+        ),
+        item("Stop", () => void call("stop"), "S", !current),
+        item("Previous", () => void call("previous"), "P", !s.playlist.length),
+        item("Next", () => void call("next"), "N", !s.playlist.length),
+        separator,
+        item(
+          "Previous Chapter",
+          () => void call("previous_chapter"),
+          undefined,
+          !p.chapter_count,
+        ),
+        item(
+          "Next Chapter",
+          () => void call("next_chapter"),
+          undefined,
+          !p.chapter_count,
+        ),
+        ...Array.from({ length: p.chapter_count || 0 }, (_, index) =>
+          item(
+            `Chapter ${index + 1}`,
+            () => void call("chapter", index),
+            undefined,
+            false,
+            p.chapter === index,
+          ),
+        ),
+        separator,
+        item("Jump to Time…", () => setPanel("jump"), "Ctrl+T", !p.seekable),
+        item(
+          "Next Frame",
+          () => void perform("step_frame"),
+          "E",
+          !current || audio,
+        ),
+        separator,
+        ...[0.5, 0.75, 1, 1.25, 1.5, 2, 4].map((rate) =>
+          item(
+            `Speed ${rate}×`,
+            () => void call("rate", rate),
+            undefined,
+            false,
+            s.rate === rate,
+          ),
+        ),
+        separator,
+        item(
+          "Random",
+          () => void perform("shuffle", s.shuffle ? 0 : 1),
+          undefined,
+          false,
+          !!s.shuffle,
+        ),
+        item(
+          "Repeat All",
+          () =>
+            void call("repeat", undefined, s.repeat === "all" ? "off" : "all"),
+          undefined,
+          false,
+          s.repeat === "all",
+        ),
+        item(
+          "Repeat One",
+          () =>
+            void call("repeat", undefined, s.repeat === "one" ? "off" : "one"),
+          undefined,
+          false,
+          s.repeat === "one",
+        ),
+        item(
+          loopA === null
+            ? "Set A–B start"
+            : loopB === null
+              ? "Set A–B end"
+              : "Clear A–B loop",
+          () => void perform("ab_loop"),
+          "L",
+          !p.seekable,
+        ),
+      ],
+    },
+    {
+      label: "Audio",
+      items: [
+        item("Mute", () => void call("mute"), "M", false, s.muted),
+        item(
+          "Increase Volume",
+          () => void call("volume", Math.min(150, s.volume + 5)),
+          "Ctrl+↑",
+        ),
+        item(
+          "Decrease Volume",
+          () => void call("volume", Math.max(0, s.volume - 5)),
+          "Ctrl+↓",
+        ),
+        separator,
+        ...p.audio_tracks.map((track) =>
+          item(
+            track.name,
+            () => void call("audio", track.id),
+            undefined,
+            !current,
+            p.audio_track === track.id,
+          ),
+        ),
+        separator,
+        ...[
+          [1, "Stereo"],
+          [2, "Reverse stereo"],
+          [3, "Left channel"],
+          [4, "Right channel"],
+          [5, "Dolby Surround"],
+        ].map(([value, label]) =>
+          item(
+            String(label),
+            () => void call("audio_channel", Number(value)),
+            undefined,
+            !current,
+            p.audio_channel === value,
+          ),
+        ),
+        separator,
+        item(
+          "Audio Effects & Synchronization…",
+          () => setPanel("effects"),
+          "Ctrl+E",
+        ),
+      ],
+    },
+    {
+      label: "Video",
+      items: [
+        item("Fullscreen", () => void fullscreen(), "F", !player.native),
+        item(
+          "Always on Top",
+          () => void setTop(),
+          undefined,
+          !player.native,
+          alwaysOnTop,
+        ),
+        separator,
+        ...["", "16:9", "16:10", "4:3", "1:1", "2.35:1", "21:9"].map((ratio) =>
+          item(
+            ratio ? `Aspect Ratio ${ratio}` : "Default Aspect Ratio",
+            () => void call("aspect", undefined, ratio),
+            undefined,
+            false,
+            s.aspect === ratio,
+          ),
+        ),
+        separator,
+        ...["none", "16:9", "4:3", "2.35:1"].map((ratio) =>
+          item(
+            ratio === "none" ? "No Crop" : `Crop ${ratio}`,
+            () => setCrop(ratio),
+            undefined,
+            false,
+            crop === ratio,
+          ),
+        ),
+        separator,
+        item(
+          "Take Snapshot…",
+          () => void snapshot(),
+          "Shift+S",
+          !current || audio,
+        ),
+      ],
+    },
+    {
+      label: "Subtitle",
+      items: [
+        item(
+          "Add Subtitle File…",
+          () => void player.subtitles(),
+          undefined,
+          !current,
+        ),
+        separator,
+        item(
+          "Disable",
+          () => void call("subtitle", -1),
+          undefined,
+          !current,
+          p.subtitle_track === -1,
+        ),
+        ...p.subtitle_tracks
+          .filter((t) => t.id >= 0)
+          .map((track) =>
+            item(
+              track.name,
+              () => void call("subtitle", track.id),
+              undefined,
+              !current,
+              p.subtitle_track === track.id,
+            ),
+          ),
+        separator,
+        item("Track Synchronization…", () => setPanel("effects")),
+      ],
+    },
+    {
+      label: "Tools",
+      items: [
+        item("Effects and Filters…", () => setPanel("effects"), "Ctrl+E"),
+        item("Media Information…", () => setPanel("info"), "Ctrl+I", !current),
+        item("Bookmarks…", () => setPanel("bookmarks"), "Ctrl+B", !current),
+        separator,
+        item("Preferences…", () => setPanel("settings"), "Ctrl+P"),
+      ],
+    },
+    {
+      label: "View",
+      items: [
+        item("Playlist", toggleView, "Ctrl+L", false, view === "playlist"),
+        item(
+          "Advanced Controls",
+          () => setAdvanced((v) => !v),
+          undefined,
+          false,
+          advanced,
+        ),
+      ],
+    },
+    {
+      label: "Help",
+      items: [
+        item("Keyboard Shortcuts…", () => setPanel("settings")),
+        item("About RelayN Player", () => setPanel("about")),
+      ],
+    },
+  ];
+  const saveBookmarks = (entries: Bookmark[]) => {
+    if (!current) return;
+    const updated = { ...bookmarks, [current.path]: entries };
+    try {
+      localStorage.setItem("relayn_bookmarks", JSON.stringify(updated));
+      setBookmarks(updated);
+    } catch (error) {
+      player.report(error);
+    }
+  };
   return (
     <div
-      className={`vlc-app-shell ${dragging ? 'is-dragging' : ''}`}
-      onMouseMove={handleMouseMove}
-      onDragOver={e => e.preventDefault()}
+      className={`vlc-app-shell classic-player ${advanced ? "advanced-controls" : ""}`}
     >
-      {/* ================= TOP APPLICATION HEADER ================= */}
-      <header className={`vlc-top-header ${showControls || viewMode === 'playlist' ? 'visible' : 'autohide'}`}>
-        <div className="vlc-brand-group" onClick={handleToggleViewMode} title="Toggle Playlist / Player (⌘L)">
-          <img src={brandSymbol} alt="" width="20" height="20" />
-          <span className="brand-text">RelayN</span>
-          <span className={`status-dot ${isPlaying ? 'live' : ''}`} title={isPlaying ? 'Playing' : 'Ready'} />
-        </div>
-
-        {/* Center Title Pill */}
-        <div className="vlc-header-title">
-          {current ? (
-            <div className="header-media-badge" title={current.path}>
-              <span className="mono format-chip">{extension(current.name).toUpperCase()}</span>
-              <span className="title-str">{mediaTitle(p.title || current.name)}</span>
-              {p.artist && <span className="artist-str">· {p.artist}</span>}
-            </div>
-          ) : (
-            <span className="header-idle-tagline">RelayN Player</span>
-          )}
-        </div>
-
-        {/* Header Tools */}
-        <div className="vlc-header-actions">
-          <button
-            className="header-btn"
-            title="Open media file (⌘O)"
-            aria-label="Open Media"
-            onClick={() => void open(true)}
-          >
-            <FolderOpen size={16} />
-          </button>
-
-          <button
-            className={`header-btn ${panel === 'effects' ? 'active' : ''}`}
-            title="Audio & Video Effects (⌘E)"
-            aria-label="Effects"
-            onClick={() => setPanel(p => p === 'effects' ? null : 'effects')}
-          >
-            <Sliders size={16} />
-          </button>
-
-          <button
-            className={`header-btn ${viewMode === 'playlist' ? 'active' : ''}`}
-            title="Toggle Playlist (⌘L)"
-            aria-label="Playlist"
-            onClick={handleToggleViewMode}
-          >
-            <ListMusic size={16} />
-            {s.playlist.length > 0 && <span className="btn-badge">{s.playlist.length}</span>}
-          </button>
-
-          <button
-            className={`header-btn ${panel === 'info' ? 'active' : ''}`}
-            title="Media Information (⌘I)"
-            aria-label="Info"
-            disabled={!current}
-            onClick={() => setPanel(p => p === 'info' ? null : 'info')}
-          >
-            <Info size={16} />
-          </button>
-
-          <button
-            className={`header-btn ${panel === 'settings' ? 'active' : ''}`}
-            title="Preferences & Shortcuts (⌘,)"
-            aria-label="Settings"
-            onClick={() => setPanel(p => p === 'settings' ? null : 'settings')}
-          >
-            <Settings2 size={16} />
+      <PlayerMenu menus={menus} onOpenChange={setMenuOpen} />
+      {player.error && (
+        <div className="player-error" role="alert">
+          <span>{player.error}</span>
+          <button aria-label="Dismiss error" onClick={player.dismiss}>
+            <X size={16} />
           </button>
         </div>
-      </header>
-
-      {/* ================= MAIN CONTENT AREA ================= */}
+      )}
       <main className="vlc-main-stage">
-        {/* HUD On-Screen Display Overlay */}
-        <HudToast message={hudMessage} onClear={() => setHudMessage(null)} />
-
-        {/* VIEW 1: Playlist / Library Mode */}
-        {viewMode === 'playlist' ? (
+        <HudToast message={hud} onClear={() => setHud(null)} />
+        {view === "playlist" ? (
           <PlaylistView
             player={player}
-            onClose={() => setViewMode('video')}
-            shuffle={shuffle}
-            onToggleShuffle={() => {
-              setShuffle(prev => {
-                const next = !prev;
-                setHudMessage(`Shuffle: ${next ? 'On' : 'Off'}`);
-                return next;
-              });
-            }}
+            onClose={() => setView("video")}
+            shuffle={!!s.shuffle}
+            onToggleShuffle={() => void perform("shuffle", s.shuffle ? 0 : 1)}
           />
         ) : !current ? (
-          /* Empty Dropzone / Welcome Mode */
-          <div className="vlc-dropzone" onClick={() => void open(true)}>
-            <div className="dropzone-halo">
-              <IdleArtwork />
-            </div>
-            <div className="dropzone-text-group">
-              <h2>Open media to begin</h2>
-              <p>Drop video or audio files here, or browse from your computer.</p>
-              <button
-                className="button primary"
-                onClick={e => {
-                  e.stopPropagation();
-                  void open(true);
-                }}
-              >
-                <FolderOpen size={16} /> Open media file <span className="kbd-hint">⌘O</span>
-              </button>
-              <div className="dropzone-codecs">
-                <span>MP4</span><span>MKV</span><span>HEVC</span><span>AV1</span><span>ProRes</span><span>FLAC</span><span>WAV</span><span>WebM</span>
-              </div>
-            </div>
+          <div className="classic-empty">
+            <img src={brandSymbol} width="120" height="120" alt="RelayN" />
+            <button
+              className="button secondary"
+              onClick={() => void open(true)}
+            >
+              <FolderOpen size={16} />
+              Open media…
+            </button>
+            <p>Drop files here to play</p>
           </div>
-        ) : isAudio ? (
-          /* Pure Audio Player Mode */
-          <div className="vlc-audio-stage">
-            <div className={`audio-disc-container ${isPlaying ? 'is-playing' : ''}`}>
-              <div className="disc-grooves">
-                <Disc3 size={110} strokeWidth={0.5} />
-              </div>
-              <div className="disc-artwork">
-                <MediaArtwork name={current.name} playing={isPlaying} />
-              </div>
-            </div>
-
-            <div className="audio-details-col">
-              <span className="mono format-badge">{extension(current.name).toUpperCase()} AUDIO</span>
-              <h1>{mediaTitle(p.title || current.name)}</h1>
-              <p className="artist-line">{p.artist || parentFolder(current.path)}</p>
-              {p.album && <p className="album-line">{p.album}</p>}
-
-              <div className={`audio-eq-bars ${isPlaying ? 'animated' : ''}`}>
-                <span /><span /><span /><span /><span />
-              </div>
-            </div>
+        ) : audio ? (
+          <div className="classic-audio">
+            <img src={brandSymbol} width="96" height="96" alt="" />
+            <h1>{mediaTitle(p.title || current.name)}</h1>
+            {p.artist && <p>{p.artist}</p>}
+            {p.album && <p>{p.album}</p>}
           </div>
         ) : (
-          /* Full Edge-to-Edge Video Stage */
           <div
-            className={`vlc-video-stage crop-${cropRatio}`}
-            onClick={togglePlayback}
-            onDoubleClick={() => fullscreen()}
+            className="vlc-video-stage"
+            onDoubleClick={() => void fullscreen()}
           >
-            {/* Native video handle container */}
-            <div
-              ref={videoRef}
-              className={`native-video-box crop-${cropRatio}`}
-              style={videoFilterStyle}
-            >
-              {/* HTML5 video fallback for web browser preview */}
+            <div ref={videoRef} className="native-video-box">
               {!player.native && (
                 <video
-                  ref={webVideoRef}
+                  ref={webVideo}
                   className="html-video-element"
                   src={webObjectUrls.get(current.id) || current.path}
                   playsInline
-                  style={videoFilterStyle}
+                  onClick={() => void call("toggle")}
                 />
               )}
             </div>
           </div>
         )}
+        {player.dragging && (
+          <div className="classic-drop" role="status">
+            Drop files to add to the playlist
+          </div>
+        )}
       </main>
-
-      {/* ================= BOTTOM VLC TRANSPORT CONTROLLER ================= */}
-      {/* Auto-hides on mouse idle during video playback; stays visible in playlist mode */}
-      <div className={`vlc-dock-wrapper ${showControls || viewMode === 'playlist' || !isPlaying ? 'visible' : 'autohide'}`}>
+      <div className="vlc-dock-wrapper visible">
         <Transport
           player={player}
-          viewMode={viewMode}
-          onToggleViewMode={handleToggleViewMode}
+          viewMode={view}
+          onToggleViewMode={toggleView}
           loopA={loopA}
           loopB={loopB}
-          onToggleAbLoop={handleToggleAbLoop}
-          onOpenEffects={() => setPanel('effects')}
-          onOpenBookmarks={() => setPanel('bookmarks')}
-          onOpenJump={() => setPanel('jump')}
-          onSnapshot={handleSnapshot}
-          onStepFrame={handleStepFrame}
-          shuffle={shuffle}
-          onToggleShuffle={() => {
-            setShuffle(prev => {
-              const next = !prev;
-              setHudMessage(`Shuffle: ${next ? 'On' : 'Off'}`);
-              return next;
-            });
-          }}
-          cropRatio={cropRatio}
-          onSetCropRatio={ratio => {
-            setCropRatio(ratio);
-            setHudMessage(`Crop: ${ratio}`);
-          }}
-          audioDelay={audioDelay}
-          onAudioDelayChange={handleAudioDelayChange}
+          onToggleAbLoop={() => void perform("ab_loop")}
+          onOpenEffects={() => setPanel("effects")}
+          onOpenBookmarks={() => setPanel("bookmarks")}
+          onOpenJump={() => setPanel("jump")}
+          onSnapshot={() => void snapshot()}
+          onStepFrame={() => void perform("step_frame")}
+          shuffle={!!s.shuffle}
+          onToggleShuffle={() => void perform("shuffle", s.shuffle ? 0 : 1)}
+          cropRatio={crop}
+          onSetCropRatio={setCrop}
+          audioDelay={delay}
+          onAudioDelayChange={setAudioDelay}
           subDelay={subDelay}
-          onSubDelayChange={handleSubDelayChange}
+          onSubDelayChange={setSubtitleDelay}
+          onPopoverChange={setPopoverOpen}
         />
       </div>
-
-      {/* ================= AUDIO & VIDEO EFFECTS MODAL (⌘E) ================= */}
-      {panel === 'effects' && (
+      <div className="classic-status">
+        <span>
+          {!player.native
+            ? "Browser preview"
+            : state.runtime === "Unavailable"
+              ? "Playback engine unavailable"
+              : `libVLC ${state.runtime}`}
+        </span>
+        <span>
+          {current
+            ? `${p.state} · ${mediaTitle(current.name)}`
+            : "No media loaded"}
+        </span>
+        <span>
+          {s.playlist.length} items · {s.volume}%
+        </span>
+      </div>
+      {panel === "effects" && (
         <EffectsModal
           player={player}
           adjustments={adjustments}
-          setAdjustments={setAdjustments}
-          audioDelay={audioDelay}
-          setAudioDelay={handleAudioDelayChange}
+          setAdjustments={setVideoAdjustments}
+          audioDelay={delay}
+          setAudioDelay={setAudioDelay}
           subDelay={subDelay}
-          setSubDelay={handleSubDelayChange}
-          equalizerBands={equalizerBands}
-          setEqualizerBands={setEqualizerBands}
+          setSubDelay={setSubtitleDelay}
+          equalizerBands={eq.bands}
+          setEqualizerBands={setBands}
           equalizerPreset={equalizerPreset}
           setEqualizerPreset={setEqualizerPreset}
-          onClose={() => setPanel(null)}
+          onClose={close}
         />
       )}
-
-      {/* ================= JUMP TO TIME MODAL (⌘T) ================= */}
-      {panel === 'jump' && (
+      {panel === "jump" && (
         <JumpModal
           currentTimeMs={p.time}
           durationMs={p.duration}
-          onJump={timeMs => {
-            void call('seek', timeMs);
-            setHudMessage(`Jumped to ${formatTime(timeMs)}`);
-          }}
-          onClose={() => setPanel(null)}
+          onJump={(time) => void call("seek", time)}
+          onClose={close}
         />
       )}
-
-      {/* ================= BOOKMARKS MODAL (⌘B) ================= */}
-      {panel === 'bookmarks' && current && (
+      {panel === "bookmarks" && current && (
         <BookmarksModal
           filePath={current.path}
           currentTimeMs={p.time}
           bookmarks={currentBookmarks}
-          onAddBookmark={addBookmark}
-          onDeleteBookmark={deleteBookmark}
-          onSeek={timeMs => {
-            void call('seek', timeMs);
-            setHudMessage(`Jumped to bookmark (${formatTime(timeMs)})`);
-          }}
-          onClose={() => setPanel(null)}
+          onAddBookmark={(time, label) =>
+            saveBookmarks([
+              ...currentBookmarks,
+              { id: crypto.randomUUID(), time, label },
+            ])
+          }
+          onDeleteBookmark={(id) =>
+            saveBookmarks(currentBookmarks.filter((b) => b.id !== id))
+          }
+          onSeek={(time) => void call("seek", time)}
+          onClose={close}
         />
       )}
-
-      {/* ================= MEDIA INFORMATION MODAL (⌘I) ================= */}
-      {panel === 'info' && current && (
-        <div className="modal-backdrop" onClick={() => setPanel(null)}>
-          <div className="dialog-window media-info-dialog" onClick={e => e.stopPropagation()}>
-            <div className="dialog-header">
-              <div className="dialog-title-group">
-                <Info size={17} className="dialog-icon" />
-                <h3>Media Information</h3>
+      {panel === "info" && (
+        <PlayerDialog title="Media Information" close={close}>
+          <dl className="classic-info">
+            {[
+              ["Location", current?.path || "No media"],
+              ["Title", p.title || current?.name || "—"],
+              ["Artist", p.artist || "—"],
+              ["Album", p.album || "—"],
+              ["Duration", p.duration ? formatTime(p.duration) : "Unknown"],
+              [
+                "Audio tracks",
+                p.audio_tracks
+                  .filter((t) => t.id >= 0)
+                  .map((t) => t.name)
+                  .join(", ") || "None",
+              ],
+              [
+                "Subtitle tracks",
+                p.subtitle_tracks
+                  .filter((t) => t.id >= 0)
+                  .map((t) => t.name)
+                  .join(", ") || "None",
+              ],
+              ["Runtime", state.runtime],
+            ].map(([key, value]) => (
+              <div key={key}>
+                <dt>{key}</dt>
+                <dd>{value}</dd>
               </div>
-              <button className="icon-button small" aria-label="Close" onClick={() => setPanel(null)}>
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="dialog-content">
-              <div className="info-meta-grid">
-                <div className="info-cell">
-                  <span className="mono label">TITLE</span>
-                  <strong className="value">{mediaTitle(p.title || current.name)}</strong>
-                </div>
-
-                <div className="info-cell">
-                  <span className="mono label">CONTAINER / FORMAT</span>
-                  <span className="value chip">{extension(current.name).toUpperCase()}</span>
-                </div>
-
-                <div className="info-cell">
-                  <span className="mono label">DURATION</span>
-                  <span className="value mono">{p.duration > 0 ? formatTime(p.duration) : '—'}</span>
-                </div>
-
-                <div className="info-cell">
-                  <span className="mono label">AUDIO STREAMS</span>
-                  <span className="value">{p.audio_tracks.filter(t => t.id >= 0).length} stream(s)</span>
-                </div>
-
-                <div className="info-cell">
-                  <span className="mono label">SUBTITLE STREAMS</span>
-                  <span className="value">{p.subtitle_tracks.filter(t => t.id >= 0).length} stream(s)</span>
-                </div>
-
-                <div className="info-cell">
-                  <span className="mono label">ENGINE / CODEC RUNTIME</span>
-                  <span className="value mono">{state.runtime}</span>
-                </div>
-
-                <div className="info-cell full-width">
-                  <span className="mono label">FULL FILE PATH</span>
-                  <code className="path-code">{current.path}</code>
-                </div>
-              </div>
-
-              <div className="dialog-footer-actions">
-                <button className="button secondary" onClick={() => setPanel(null)}>Close</button>
-              </div>
-            </div>
-          </div>
-        </div>
+            ))}
+          </dl>
+        </PlayerDialog>
       )}
-
-      {/* ================= PREFERENCES & SHORTCUTS MODAL (⌘,) ================= */}
-      {panel === 'settings' && (
-        <div className="modal-backdrop" onClick={() => setPanel(null)}>
-          <div className="dialog-window shortcuts-dialog" onClick={e => e.stopPropagation()}>
-            <div className="dialog-header">
-              <div className="dialog-title-group">
-                <Settings2 size={17} className="dialog-icon" />
-                <h3>Keyboard Shortcuts</h3>
+      {panel === "settings" && (
+        <PlayerDialog title="Preferences" close={close}>
+          <div className="classic-preferences">
+            <label>
+              Volume{" "}
+              <input
+                type="range"
+                min="0"
+                max="150"
+                value={s.volume}
+                onChange={(e) => void call("volume", Number(e.target.value))}
+              />
+              <output>{s.volume}%</output>
+            </label>
+            <label>
+              Playback speed{" "}
+              <select
+                value={s.rate}
+                onChange={(e) => void call("rate", Number(e.target.value))}
+              >
+                {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4].map((r) => (
+                  <option key={r} value={r}>
+                    {r}×
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Repeat{" "}
+              <select
+                value={s.repeat}
+                onChange={(e) => void call("repeat", undefined, e.target.value)}
+              >
+                <option value="off">Off</option>
+                <option value="all">All</option>
+                <option value="one">One</option>
+              </select>
+            </label>
+          </div>
+          <p className="preferences-note">
+            Playback settings and the playlist are saved on this computer.
+            Restoring a session does not start playback automatically.
+          </p>
+          <h3>Keyboard shortcuts</h3>
+          <div className="classic-shortcuts">
+            {[
+              ["Open / add files", "Ctrl+O / Ctrl+Shift+O"],
+              ["Open folder / network", "Ctrl+F / Ctrl+N"],
+              ["Play / pause / stop", "Space / S"],
+              ["Next / previous", "N / P"],
+              ["Short / medium / long seek", "Shift / Alt / Ctrl + ← →"],
+              ["Volume / mute", "Ctrl+↑ ↓ / M"],
+              ["Playlist / effects / preferences", "Ctrl+L / Ctrl+E / Ctrl+P"],
+              ["Jump to time / bookmarks", "Ctrl+T / Ctrl+B"],
+              ["Next frame / snapshot", "E / Shift+S"],
+              ["Audio / subtitle delay", "J K / G H"],
+              ["Fullscreen / leave", "F / Esc"],
+            ].map(([name, key]) => (
+              <div key={name}>
+                <span>{name}</span>
+                <kbd>{key}</kbd>
               </div>
-              <button className="icon-button small" aria-label="Close" onClick={() => setPanel(null)}>
-                <X size={16} />
+            ))}
+          </div>
+        </PlayerDialog>
+      )}
+      {panel === "about" && (
+        <PlayerDialog title="About RelayN Player" close={close}>
+          <div className="classic-about">
+            <img src={brandSymbol} width="72" height="72" alt="RelayN" />
+            <h2>RelayN Player 0.1.0</h2>
+            <p>Your media. In motion.</p>
+            <p>
+              Powered by libVLC {state.runtime}. A native media player for
+              Windows and macOS.
+            </p>
+            <p>
+              Development build. VLC-compatible core workflows are being
+              implemented and tested. RelayN uses its own identity and is not
+              affiliated with VideoLAN.
+            </p>
+          </div>
+        </PlayerDialog>
+      )}
+      {panel === "network" && (
+        <PlayerDialog title="Open Network Stream" close={close}>
+          <form
+            onSubmit={async (event) => {
+              event.preventDefault();
+              try {
+                await invoke("open_network", { url: network, replace: true });
+                close();
+              } catch (error) {
+                player.report(error);
+              }
+            }}
+          >
+            <label className="network-label">
+              Network URL
+              <input
+                autoFocus
+                value={network}
+                onChange={(event) => setNetwork(event.target.value)}
+                placeholder="https://example.com/media.mp4"
+                required
+              />
+            </label>
+            <p className="preferences-note">
+              Open a stream you trust. The address is contacted only when you
+              choose Play. HTTP, HTTPS and RTSP are supported. Embedded
+              usernames and passwords are rejected; addresses, including query
+              strings, are saved in the playlist.
+            </p>
+            <div className="dialog-footer-actions">
+              <button
+                type="button"
+                className="button secondary"
+                onClick={close}
+              >
+                Cancel
+              </button>
+              <button type="submit" className="button primary">
+                Play
               </button>
             </div>
-
-            <div className="dialog-content">
-              <div className="shortcuts-table">
-                <div className="shortcut-row"><span>Play / Pause</span><kbd>Space</kbd></div>
-                <div className="shortcut-row"><span>Seek ±10s / ±60s</span><kbd>← / → / ⇧← / ⇧→</kbd></div>
-                <div className="shortcut-row"><span>Volume Up / Down (0–150%)</span><kbd>↑ / ↓</kbd></div>
-                <div className="shortcut-row"><span>Next Video Frame</span><kbd>E</kbd></div>
-                <div className="shortcut-row"><span>Playback Speed Slower / Faster</span><kbd>[ / ]</kbd></div>
-                <div className="shortcut-row"><span>Reset Speed to 1.0×</span><kbd>=</kbd></div>
-                <div className="shortcut-row"><span>A-B Repeat Loop (Set A → Set B → Clear)</span><kbd>L</kbd></div>
-                <div className="shortcut-row"><span>Toggle Playlist Table View</span><kbd>⌘ L</kbd></div>
-                <div className="shortcut-row"><span>Audio Delay ±50ms (Lipsync)</span><kbd>J / K</kbd></div>
-                <div className="shortcut-row"><span>Subtitle Delay ±50ms</span><kbd>H / G</kbd></div>
-                <div className="shortcut-row"><span>Jump to Specific Time</span><kbd>⌘ T</kbd></div>
-                <div className="shortcut-row"><span>Bookmarks Manager</span><kbd>⌘ B</kbd></div>
-                <div className="shortcut-row"><span>Equalizer & Video Adjustments</span><kbd>⌘ E</kbd></div>
-                <div className="shortcut-row"><span>Take Lossless Snapshot</span><kbd>⌘ S</kbd></div>
-                <div className="shortcut-row"><span>Mute / Unmute</span><kbd>M</kbd></div>
-                <div className="shortcut-row"><span>Toggle Fullscreen</span><kbd>F</kbd></div>
-                <div className="shortcut-row"><span>Cycle Aspect Ratio</span><kbd>A</kbd></div>
-                <div className="shortcut-row"><span>Cycle Crop Mode</span><kbd>C</kbd></div>
-              </div>
-
-              <div className="dialog-footer-actions">
-                <span className="mono muted">RELAYN PLAYER · HIGH-EFFICIENCY LIBVLC ENGINE</span>
-                <button className="button secondary" onClick={() => setPanel(null)}>Close</button>
-              </div>
-            </div>
-          </div>
-        </div>
+          </form>
+        </PlayerDialog>
       )}
     </div>
   );

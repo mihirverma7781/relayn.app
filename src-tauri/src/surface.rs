@@ -1,6 +1,68 @@
 use std::sync::{Arc, Mutex};
 use tauri::WebviewWindow;
 
+#[cfg(windows)]
+mod pointer_input {
+    use tauri::{Emitter, WebviewWindow};
+    use windows_sys::Win32::{
+        Foundation::{HWND, LPARAM, LRESULT, WPARAM},
+        UI::{
+            Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass},
+            WindowsAndMessaging::{
+                WM_LBUTTONDBLCLK, WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_NCDESTROY, WM_RBUTTONDOWN,
+            },
+        },
+    };
+
+    const SUBCLASS_ID: usize = 0x524c594e;
+
+    struct InputContext {
+        window: WebviewWindow,
+    }
+
+    unsafe extern "system" fn host_proc(
+        hwnd: HWND,
+        message: u32,
+        wparam: WPARAM,
+        lparam: LPARAM,
+        id: usize,
+        data: usize,
+    ) -> LRESULT {
+        if message == WM_NCDESTROY {
+            // The host is owned by the OS parent window. Reclaim exactly once when
+            // that host is destroyed, including during failed app initialization.
+            RemoveWindowSubclass(hwnd, Some(host_proc), id);
+            drop(Box::from_raw(data as *mut InputContext));
+            return DefSubclassProc(hwnd, message, wparam, lparam);
+        }
+        if matches!(
+            message,
+            WM_LBUTTONDOWN | WM_LBUTTONDBLCLK | WM_MBUTTONDOWN | WM_RBUTTONDOWN
+        ) {
+            let window = (*(data as *const InputContext)).window.clone();
+            // Focus the WebView itself, not just the containing native window.
+            // libVLC's keyboard handling stays disabled so app shortcuts work.
+            let webview: &tauri::Webview = window.as_ref();
+            let _ = webview.set_focus();
+            if message == WM_LBUTTONDBLCLK {
+                let _ = window.emit("video-double-click", ());
+            }
+        }
+        DefSubclassProc(hwnd, message, wparam, lparam)
+    }
+
+    pub unsafe fn install(hwnd: HWND, window: &WebviewWindow) -> Result<(), String> {
+        let context = Box::into_raw(Box::new(InputContext {
+            window: window.clone(),
+        }));
+        if SetWindowSubclass(hwnd, Some(host_proc), SUBCLASS_ID, context as usize) == 0 {
+            drop(Box::from_raw(context));
+            return Err("Could not connect native video input".into());
+        }
+        Ok(())
+    }
+}
+
 #[derive(Default, Clone)]
 pub struct Surface {
     pub handle: Arc<Mutex<usize>>,
@@ -34,6 +96,7 @@ impl Surface {
                     WS_CHILD
                         | WS_CLIPSIBLINGS
                         | WS_CLIPCHILDREN
+                        | windows_sys::Win32::System::SystemServices::SS_NOTIFY
                         | windows_sys::Win32::System::SystemServices::SS_BLACKRECT,
                     0,
                     0,
@@ -46,6 +109,10 @@ impl Surface {
                 );
                 if child.is_null() {
                     return Err("Could not create the native video surface".into());
+                }
+                if let Err(error) = pointer_input::install(child, window) {
+                    DestroyWindow(child);
+                    return Err(error);
                 }
                 *handle = child as usize;
             }

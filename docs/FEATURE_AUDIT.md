@@ -1,3 +1,9 @@
+# Current audit pointer — 2026-10-26
+
+The current feature/verification ledger is [VLC_PARITY.md](VLC_PARITY.md). It supersedes the initial findings below: native EQ/crop/shuffle/A–B/frame, menus, queue editing, bounded settings/ID repair and Windows native launch were implemented or repaired. Folder opening adds files to the queue; it is not a persistent indexed library. Full VLC parity remains incomplete.
+
+## Initial audit retained for context
+
 # RelayN implementation audit — 2026-10-24
 
 This is an initial audit, not a completed release certification. The branding milestone is implemented. The broader product audit and development phases remain open.

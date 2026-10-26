@@ -19,6 +19,8 @@ struct Snapshot {
     settings: Saved,
     error: Option<String>,
     runtime: String,
+    loop_a: Option<i64>,
+    loop_b: Option<i64>,
 }
 struct Engine {
     vlc: Option<Vlc>,
@@ -28,6 +30,11 @@ struct Engine {
     persist_allowed: bool,
     last_state: String,
     surface_handle: Arc<Mutex<usize>>,
+    loop_a: Option<i64>,
+    loop_b: Option<i64>,
+    shuffle_remaining: Vec<u64>,
+    shuffle_history: Vec<u64>,
+    random_state: u64,
 }
 type Shared = Arc<Mutex<Engine>>;
 impl Engine {
@@ -43,6 +50,8 @@ impl Engine {
                 }
             },
             settings: self.saved.clone(),
+            loop_a: self.loop_a,
+            loop_b: self.loop_b,
             error: self.error.clone(),
             runtime: self
                 .vlc
@@ -64,24 +73,48 @@ impl Engine {
             .iter()
             .find(|i| i.id == id)
             .ok_or("Playlist item no longer exists")?;
-        if !std::path::Path::new(&item.path).is_file() {
+        if item.path.contains("://") {
+            model::network_url(&item.path)?;
+        } else if !std::path::Path::new(&item.path).is_file() {
             return Err(format!("File is missing or unavailable: {}", item.name));
         }
         let handle = self.surface_handle.lock().map(|h| *h).unwrap_or(0);
         let v = self.vlc.as_mut().ok_or("libVLC is not available")?;
         if handle != 0 {
-            let _ = v.attach(handle);
+            v.attach(handle)?;
         }
         v.open(&item.path)?;
         v.volume(self.saved.volume, self.saved.muted);
         v.rate(self.saved.rate)?;
         v.aspect(&self.saved.aspect);
+        v.crop(&self.saved.crop)?;
+        v.adjustments(&self.saved.video_adjustments)?;
+        v.equalizer(&self.saved.equalizer)?;
         self.saved.current = Some(id);
+        self.loop_a = None;
+        self.loop_b = None;
+        self.shuffle_remaining.retain(|next| *next != id);
         self.error = None;
         self.last_state = "opening".into();
         self.save()
     }
     fn advance(&mut self, automatic: bool) -> Result<(), String> {
+        if self.saved.shuffle && !(automatic && self.saved.repeat == "one") {
+            if self.shuffle_remaining.is_empty() && self.saved.repeat == "all" {
+                self.refill_shuffle();
+            }
+            if let Some(id) = self.shuffle_remaining.pop() {
+                let previous = self.saved.current;
+                self.play(id)?;
+                if let Some(previous) = previous {
+                    self.shuffle_history.push(previous);
+                    if self.shuffle_history.len() > 10000 {
+                        self.shuffle_history.remove(0);
+                    }
+                }
+            }
+            return Ok(());
+        }
         let index = self
             .saved
             .playlist
@@ -99,9 +132,166 @@ impl Engine {
         }
         Ok(())
     }
+    fn refill_shuffle(&mut self) {
+        self.shuffle_remaining = self
+            .saved
+            .playlist
+            .iter()
+            .filter(|item| Some(item.id) != self.saved.current)
+            .map(|item| item.id)
+            .collect();
+        for index in (1..self.shuffle_remaining.len()).rev() {
+            self.random_state ^= self.random_state << 13;
+            self.random_state ^= self.random_state >> 7;
+            self.random_state ^= self.random_state << 17;
+            let target = self.random_state as usize % (index + 1);
+            self.shuffle_remaining.swap(index, target);
+        }
+        if self.shuffle_remaining.is_empty() && self.saved.repeat == "all" {
+            if let Some(id) = self.saved.current {
+                self.shuffle_remaining.push(id);
+            }
+        }
+    }
+    fn add_files(&mut self, files: Vec<PathBuf>, replace: bool) -> Result<(), String> {
+        if files.is_empty() {
+            return Ok(());
+        }
+        if files.len()
+            + if replace {
+                0
+            } else {
+                self.saved.playlist.len()
+            }
+            > 10000
+        {
+            return Err("Playlist exceeds 10,000 entries".into());
+        }
+        let was_empty = self.saved.playlist.is_empty();
+        let mut id = self
+            .saved
+            .playlist
+            .iter()
+            .map(|item| item.id)
+            .max()
+            .unwrap_or(0)
+            .checked_add(1)
+            .ok_or("Playlist item IDs exhausted")?;
+        // IDs cross JSON/JavaScript, so remain within its exact integer range.
+        if id.saturating_add(files.len() as u64) > 9_007_199_254_740_991 {
+            return Err("Playlist item IDs exhausted".into());
+        }
+        let first = id;
+        let items = files
+            .into_iter()
+            .map(|path| {
+                let item = Item {
+                    id,
+                    name: path
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .into_owned(),
+                    path: path.to_string_lossy().into_owned(),
+                };
+                id += 1;
+                item
+            })
+            .collect::<Vec<_>>();
+        if replace {
+            self.saved.playlist.clear();
+            self.saved.current = None;
+            self.shuffle_history.clear();
+        }
+        self.saved.playlist.extend(items);
+        self.save()?;
+        if replace || was_empty {
+            self.play(first)?;
+        }
+        if self.saved.shuffle {
+            self.refill_shuffle();
+        }
+        Ok(())
+    }
+    fn add_network(&mut self, raw: &str, replace: bool) -> Result<(), String> {
+        let url = model::network_url(raw)?;
+        if !replace && self.saved.playlist.len() >= 10000 {
+            return Err("Playlist exceeds 10,000 entries".into());
+        }
+        let id = self
+            .saved
+            .playlist
+            .iter()
+            .map(|item| item.id)
+            .max()
+            .unwrap_or(0)
+            .checked_add(1)
+            .filter(|id| *id <= 9_007_199_254_740_991)
+            .ok_or("Playlist item IDs exhausted")?;
+        let name = url
+            .path_segments()
+            .and_then(|mut segments| segments.next_back())
+            .filter(|name| !name.is_empty())
+            .unwrap_or_else(|| url.host_str().unwrap_or("Network stream"))
+            .to_string();
+        let was_empty = self.saved.playlist.is_empty();
+        if replace {
+            self.saved.playlist.clear();
+            self.saved.current = None;
+            self.shuffle_history.clear();
+        }
+        self.saved.playlist.push(Item {
+            id,
+            name,
+            path: url.to_string(),
+        });
+        self.save()?;
+        if replace || was_empty {
+            self.play(id)?;
+        }
+        if self.saved.shuffle {
+            self.refill_shuffle();
+        }
+        Ok(())
+    }
+    fn toggle_ab_loop(&mut self) -> Result<(), String> {
+        let playback = self.vlc.as_ref().ok_or("No player")?.snapshot();
+        if !playback.seekable || playback.duration <= 0 {
+            return Err("A-B repeat requires seekable media".into());
+        }
+        if self.loop_b.is_some() {
+            self.loop_a = None;
+            self.loop_b = None;
+        } else if let Some(a) = self.loop_a {
+            if playback.time <= a + 100 {
+                return Err("Point B must be after point A".into());
+            }
+            self.loop_b = Some(playback.time);
+        } else {
+            self.loop_a = Some(playback.time);
+        }
+        Ok(())
+    }
     fn tick(&mut self) {
         let playback = self.vlc.as_ref().map(Vlc::snapshot).unwrap_or_default();
         let state = playback.state;
+        if state == "playing" {
+            if self.last_state != "playing" {
+                if let Some(v) = &self.vlc {
+                    let _ = v.crop(&self.saved.crop);
+                    let _ = v.adjustments(&self.saved.video_adjustments);
+                }
+            }
+            if let (Some(a), Some(b)) = (self.loop_a, self.loop_b) {
+                if playback.time >= b {
+                    if let Some(v) = &self.vlc {
+                        if let Err(error) = v.seek(a) {
+                            self.error = Some(error);
+                        }
+                    }
+                }
+            }
+        }
         if state == "ended" && self.last_state != "ended" {
             if playback.duration == 0 && playback.time == 0 {
                 self.error = Some(
@@ -147,43 +337,16 @@ async fn open_paths(
             return Ok(());
         }
         let mut e = state.lock().map_err(|_| "Playback lock failed")?;
-        if e.saved.playlist.len() + files.len() > 10000 {
-            return Err("Playlist exceeds 10,000 entries".into());
-        }
-        let was_empty = e.saved.playlist.is_empty();
-        let mut id = e.saved.playlist.iter().map(|i| i.id).max().unwrap_or(0) + 1;
-        let first = id;
-        let items = files
-            .into_iter()
-            .map(|path| {
-                let item = Item {
-                    id,
-                    path: path.to_string_lossy().into_owned(),
-                    name: path
-                        .file_name()
-                        .unwrap_or_default()
-                        .to_string_lossy()
-                        .into_owned(),
-                };
-                id += 1;
-                item
-            })
-            .collect::<Vec<_>>();
-        if replace {
-            e.saved.playlist.clear();
-        }
-        e.saved.playlist.extend(items);
-        e.save()?;
-        if replace || was_empty {
-            e.play(first)?;
-        }
-        Ok(())
+        e.add_files(files, replace)
     })
     .await
     .map_err(|e| e.to_string())?
 }
 #[tauri::command]
 async fn action(action: Action, engine: State<'_, Shared>) -> Result<(), String> {
+    if action.kind == "snapshot" {
+        return save_snapshot(engine).await;
+    }
     let state = engine.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
         let mut e = state.lock().map_err(|_| "Playback lock failed")?;
@@ -221,9 +384,17 @@ async fn action(action: Action, engine: State<'_, Shared>) -> Result<(), String>
                     v.stop();
                 }
                 e.last_state = "stopped".into();
+                e.loop_a = None;
+                e.loop_b = None;
             }
             "next" => e.advance(false)?,
             "previous" => {
+                if e.saved.shuffle {
+                    if let Some(id) = e.shuffle_history.pop() {
+                        e.play(id)?;
+                    }
+                    return e.save();
+                }
                 let index = e
                     .saved
                     .playlist
@@ -237,7 +408,7 @@ async fn action(action: Action, engine: State<'_, Shared>) -> Result<(), String>
             }
             "seek" => e.vlc.as_ref().ok_or("No player")?.seek(number as i64)?,
             "volume" => {
-                e.saved.volume = (number as i32).clamp(0, 100);
+                e.saved.volume = (number as i32).clamp(0, 150);
                 if let Some(v) = &e.vlc {
                     v.volume(e.saved.volume, e.saved.muted);
                 }
@@ -259,7 +430,7 @@ async fn action(action: Action, engine: State<'_, Shared>) -> Result<(), String>
             }
             "aspect" => {
                 let aspect = action.text.unwrap_or_default();
-                if !["", "16:9", "4:3", "1:1", "21:9"].contains(&aspect.as_str()) {
+                if !model::ASPECTS.contains(&aspect.as_str()) {
                     return Err("Unsupported aspect ratio".into());
                 }
                 if let Some(v) = &e.vlc {
@@ -273,6 +444,63 @@ async fn action(action: Action, engine: State<'_, Shared>) -> Result<(), String>
                     return Err("Invalid repeat mode".into());
                 }
                 e.saved.repeat = repeat;
+            }
+            "crop" => {
+                let mut crop = action.text.unwrap_or_default();
+                if crop == "none" {
+                    crop.clear();
+                }
+                if !model::ASPECTS.contains(&crop.as_str()) {
+                    return Err("Unsupported crop ratio".into());
+                }
+                e.vlc.as_ref().ok_or("No player")?.crop(&crop)?;
+                e.saved.crop = crop;
+            }
+            "video_adjustments" => {
+                let value: model::VideoAdjustments =
+                    serde_json::from_str(&action.text.unwrap_or_default())
+                        .map_err(|_| "Invalid video adjustments")?;
+                value.validate()?;
+                e.vlc.as_ref().ok_or("No player")?.adjustments(&value)?;
+                e.saved.video_adjustments = value;
+            }
+            "equalizer" => {
+                let value: model::Equalizer =
+                    serde_json::from_str(&action.text.unwrap_or_default())
+                        .map_err(|_| "Invalid equalizer values")?;
+                value.validate()?;
+                e.vlc.as_ref().ok_or("No player")?.equalizer(&value)?;
+                e.saved.equalizer = value;
+            }
+            "shuffle" => {
+                e.saved.shuffle = number != 0.;
+                e.shuffle_history.clear();
+                e.refill_shuffle();
+            }
+            "ab_loop" => e.toggle_ab_loop()?,
+            "ab_clear" => {
+                e.loop_a = None;
+                e.loop_b = None;
+            }
+            "chapter" => {
+                if number.fract() != 0. || number < 0. || number > i32::MAX as f64 {
+                    return Err("Invalid chapter number".into());
+                }
+                e.vlc.as_ref().ok_or("No player")?.chapter(number as i32)?;
+            }
+            "next_chapter" | "previous_chapter" => {
+                let v = e.vlc.as_ref().ok_or("No player")?;
+                let p = v.snapshot();
+                v.chapter(p.chapter + if action.kind == "next_chapter" { 1 } else { -1 })?;
+            }
+            "audio_channel" => {
+                if number.fract() != 0. || !(1. ..=5.).contains(&number) {
+                    return Err("Unsupported audio channel mode".into());
+                }
+                e.vlc
+                    .as_ref()
+                    .ok_or("No player")?
+                    .audio_channel(number as i32)?;
             }
             "audio" | "subtitle" => e
                 .vlc
@@ -288,6 +516,12 @@ async fn action(action: Action, engine: State<'_, Shared>) -> Result<(), String>
                     e.saved.current = None;
                 }
                 e.saved.playlist.retain(|i| i.id != id);
+                e.shuffle_remaining.retain(|next| *next != id);
+                e.shuffle_history.retain(|next| *next != id);
+                if e.saved.current.is_none() {
+                    e.loop_a = None;
+                    e.loop_b = None;
+                }
             }
             "move_up" | "move_down" => {
                 let id = action.id.ok_or("Missing item")?;
@@ -310,32 +544,25 @@ async fn action(action: Action, engine: State<'_, Shared>) -> Result<(), String>
                 }
                 e.saved.playlist.clear();
                 e.saved.current = None;
+                e.loop_a = None;
+                e.loop_b = None;
+                e.shuffle_remaining.clear();
+                e.shuffle_history.clear();
             }
             "audio_delay" => {
-                if let Some(v) = &e.vlc {
-                    v.set_audio_delay(number as i64)?;
-                }
+                e.vlc
+                    .as_ref()
+                    .ok_or("No player")?
+                    .set_audio_delay(number as i64)?;
             }
             "subtitle_delay" => {
-                if let Some(v) = &e.vlc {
-                    v.set_subtitle_delay(number as i64)?;
-                }
+                e.vlc
+                    .as_ref()
+                    .ok_or("No player")?
+                    .set_subtitle_delay(number as i64)?;
             }
             "step_frame" => {
-                if let Some(v) = &e.vlc {
-                    v.pause(true);
-                    let cur = v.snapshot().time;
-                    v.seek(cur + 40)?;
-                }
-            }
-            "snapshot" => {
-                let v = e.vlc.as_ref().ok_or("No player")?;
-                let home = std::env::var("HOME").map(PathBuf::from).unwrap_or_else(|_| PathBuf::from("/tmp"));
-                let pictures = home.join("Pictures");
-                let dir = if pictures.is_dir() { pictures } else { home.join("Desktop") };
-                let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
-                let target = dir.join(format!("RelayN_Snapshot_{secs}.png"));
-                v.take_snapshot(&target.to_string_lossy())?;
+                e.vlc.as_ref().ok_or("No player")?.next_frame()?;
             }
             "dismiss_error" => {
                 e.error = None;
@@ -369,6 +596,70 @@ async fn pick_files(subtitle: bool) -> Result<Vec<String>, String> {
                 .map(|p| p.to_string_lossy().into_owned())
                 .collect())
         }
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+#[tauri::command]
+async fn open_folder(replace: bool, engine: State<'_, Shared>) -> Result<(), String> {
+    let state = engine.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let Some(folder) = rfd::FileDialog::new()
+            .set_title("Open media folder")
+            .pick_folder()
+        else {
+            return Ok(());
+        };
+        let files = model::folder_media(&folder)?;
+        if files.is_empty() {
+            return Err("No supported media files were found in this folder".into());
+        }
+        state
+            .lock()
+            .map_err(|_| "Playback lock failed")?
+            .add_files(files, replace)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+#[tauri::command]
+async fn open_network(url: String, replace: bool, engine: State<'_, Shared>) -> Result<(), String> {
+    model::network_url(&url)?;
+    let state = engine.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        state
+            .lock()
+            .map_err(|_| "Playback lock failed")?
+            .add_network(&url, replace)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+async fn save_snapshot(engine: State<'_, Shared>) -> Result<(), String> {
+    // Validate before showing a dialog; reacquire state afterwards so a stale file cannot be captured.
+    let current = {
+        let e = engine.lock().map_err(|_| "Playback lock failed")?;
+        e.vlc.as_ref().ok_or("No player")?.require_video()?;
+        e.saved.current
+    };
+    let state = engine.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let Some(path) = rfd::FileDialog::new()
+            .set_title("Save video snapshot")
+            .add_filter("PNG image", &["png"])
+            .set_file_name("RelayN-snapshot.png")
+            .save_file()
+        else {
+            return Ok(());
+        };
+        let e = state.lock().map_err(|_| "Playback lock failed")?;
+        if e.saved.current != current {
+            return Err("Media changed while choosing a snapshot location; try again".into());
+        }
+        e.vlc
+            .as_ref()
+            .ok_or("No player")?
+            .take_snapshot(&path.to_string_lossy())
     })
     .await
     .map_err(|e| e.to_string())?
@@ -482,7 +773,21 @@ fn main() {
                 persist_allowed,
                 last_state: String::new(),
                 surface_handle,
+                loop_a: None,
+                loop_b: None,
+                shuffle_remaining: Vec::new(),
+                shuffle_history: Vec::new(),
+                random_state: std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_nanos() as u64)
+                    .unwrap_or(1)
+                    | 1,
             }));
+            if let Ok(mut e) = state.lock() {
+                if e.saved.shuffle {
+                    e.refill_shuffle();
+                }
+            }
             app.manage(state.clone());
             let handle = app.handle().clone();
             std::thread::spawn(move || loop {
@@ -506,6 +811,8 @@ fn main() {
             open_paths,
             action,
             pick_files,
+            open_folder,
+            open_network,
             load_subtitle,
             export_playlist,
             place_video
@@ -529,6 +836,61 @@ fn main() {
 #[cfg(test)]
 mod integration_tests {
     use super::*;
+    fn fixture_engine() -> Engine {
+        Engine {
+            vlc: None,
+            saved: Saved::default(),
+            path: PathBuf::new(),
+            error: None,
+            persist_allowed: false,
+            last_state: String::new(),
+            surface_handle: Arc::new(Mutex::new(0)),
+            loop_a: None,
+            loop_b: None,
+            shuffle_remaining: Vec::new(),
+            shuffle_history: Vec::new(),
+            random_state: 123456789,
+        }
+    }
+    #[test]
+    fn shuffle_bag_contains_each_other_item_once() {
+        let mut e = fixture_engine();
+        e.saved.playlist = (1..=50)
+            .map(|id| Item {
+                id,
+                path: format!("file{id}.wav"),
+                name: format!("file{id}"),
+            })
+            .collect();
+        e.saved.current = Some(10);
+        e.refill_shuffle();
+        let mut sorted = e.shuffle_remaining.clone();
+        sorted.sort();
+        assert_eq!(sorted, (1..=50).filter(|id| *id != 10).collect::<Vec<_>>());
+        assert_ne!(e.shuffle_remaining, sorted);
+        e.saved.playlist.truncate(1);
+        e.saved.current = Some(1);
+        e.saved.repeat = "all".into();
+        e.refill_shuffle();
+        assert_eq!(e.shuffle_remaining, vec![1]);
+    }
+    #[test]
+    fn invalid_network_open_preserves_local_queue() {
+        let mut e = fixture_engine();
+        e.saved.playlist.push(Item {
+            id: 1,
+            path: "C:/media.wav".into(),
+            name: "media.wav".into(),
+        });
+        e.saved.current = Some(1);
+        assert!(e.add_network("file:///C:/private.txt", true).is_err());
+        assert_eq!(e.saved.playlist.len(), 1);
+        assert_eq!(e.saved.current, Some(1));
+        assert!(e
+            .add_network("https://user:password@example.com", true)
+            .is_err());
+        assert_eq!(e.saved.playlist[0].path, "C:/media.wav");
+    }
     #[test]
     #[ignore = "requires staged libVLC and npm run fixtures"]
     fn native_engine_playback_and_error_handling() {
@@ -553,6 +915,11 @@ mod integration_tests {
             persist_allowed: true,
             last_state: String::new(),
             surface_handle: Arc::new(Mutex::new(0)),
+            loop_a: None,
+            loop_b: None,
+            shuffle_remaining: Vec::new(),
+            shuffle_history: Vec::new(),
+            random_state: 123456789,
         };
         for (index, name) in ["tone.wav", "color-motion.avi", "corrupt.mp4"]
             .iter()
@@ -601,7 +968,43 @@ mod integration_tests {
             v.rate(1.5).unwrap();
             v.volume(50, true);
             v.aspect("16:9");
+            let eq = model::Equalizer {
+                enabled: true,
+                bands: vec![2.; 10],
+                preamp: -1.,
+            };
+            v.equalizer(&eq).unwrap();
+            v.equalizer(&model::Equalizer::default()).unwrap();
+            assert!(v
+                .equalizer(&model::Equalizer {
+                    bands: vec![0.; 11],
+                    ..Default::default()
+                })
+                .is_err());
+            assert!(v.set_audio_delay(i64::MAX).is_err());
+            assert_eq!(v.snapshot().chapter_count, 0);
+            assert!(v.chapter(0).is_err());
+            assert!(v.chapter(-1).is_err());
+            assert!(v.audio_channel(99).is_err());
             if id == 2 {
+                let adjustments = model::VideoAdjustments {
+                    brightness: 20.,
+                    contrast: 120.,
+                    saturation: 80.,
+                    gamma: 1.2,
+                    hue: 20.,
+                    invert: false,
+                };
+                v.adjustments(&adjustments).unwrap();
+                assert!((v.adjustment_value(1) - 1.2).abs() < 0.01);
+                assert!((v.adjustment_value(2) - 1.2).abs() < 0.01);
+                assert!((v.adjustment_value(3) - 20.).abs() < 0.01);
+                assert!((v.adjustment_value(4) - 0.8).abs() < 0.01);
+                assert!((v.adjustment_value(5) - 1.2).abs() < 0.01);
+                v.crop("16:9").unwrap();
+                assert!(v.crop("fill").is_err());
+                v.crop("").unwrap();
+                v.adjustments(&model::VideoAdjustments::default()).unwrap();
                 v.subtitle(&root.parent().unwrap().join("work/fixtures/English.srt"))
                     .unwrap();
                 v.pause(false);
@@ -619,6 +1022,78 @@ mod integration_tests {
             }
             v.stop();
         }
+        // Exercise A/B repeat in the Rust worker, independent of any WebView timer.
+        engine.play(1).unwrap();
+        for _ in 0..100 {
+            let p = engine.snapshot().playback;
+            if p.state == "playing" && p.seekable {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        engine.vlc.as_ref().unwrap().pause(true);
+        for _ in 0..100 {
+            if engine.snapshot().playback.state == "paused" {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        engine.vlc.as_ref().unwrap().seek(1000).unwrap();
+        for _ in 0..100 {
+            if (engine.snapshot().playback.time - 1000).abs() < 100 {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        engine.toggle_ab_loop().unwrap();
+        assert!(engine.loop_a.is_some());
+        assert!(engine.toggle_ab_loop().is_err(), "B must follow A");
+        engine.vlc.as_ref().unwrap().seek(2000).unwrap();
+        for _ in 0..100 {
+            if (engine.snapshot().playback.time - 2000).abs() < 100 {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        engine.toggle_ab_loop().unwrap();
+        assert!(engine.loop_b.unwrap() > engine.loop_a.unwrap());
+        engine.vlc.as_ref().unwrap().pause(false);
+        for _ in 0..100 {
+            engine.tick();
+            if engine.snapshot().playback.time < 1500 {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        assert!(
+            engine.snapshot().playback.time < 1500,
+            "Native A/B worker should seek to A"
+        );
+        engine.toggle_ab_loop().unwrap();
+        assert_eq!((engine.loop_a, engine.loop_b), (None, None));
+        // Replacing a full old queue must count the replacement, not old + new.
+        let fixture = root.parent().unwrap().join("work/fixtures/tone.wav");
+        engine.saved.playlist = (1..=10000)
+            .map(|id| Item {
+                id,
+                path: fixture.to_string_lossy().into_owned(),
+                name: "tone.wav".into(),
+            })
+            .collect();
+        engine.add_files(vec![fixture], true).unwrap();
+        assert_eq!(engine.saved.playlist.len(), 1);
+        assert_eq!(engine.saved.current, Some(engine.saved.playlist[0].id));
+        // Restore corrupt media as a final fixture for the existing error assertion.
+        engine.saved.playlist.push(Item {
+            id: 3,
+            path: root
+                .parent()
+                .unwrap()
+                .join("work/fixtures/corrupt.mp4")
+                .to_string_lossy()
+                .into_owned(),
+            name: "corrupt.mp4".into(),
+        });
         engine.play(3).unwrap();
         for _ in 0..100 {
             std::thread::sleep(Duration::from_millis(50));
@@ -632,6 +1107,6 @@ mod integration_tests {
             "Invalid media must produce an actionable error"
         );
         let restored = Saved::read(&engine.path).unwrap();
-        assert_eq!(restored.playlist.len(), 3);
+        assert_eq!(restored.playlist.len(), 2);
     }
 }

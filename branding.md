@@ -307,3 +307,7 @@ Before calling the branding pass complete, confirm:
 ## 9. Legal and availability note
 
 `RelayN Player` is the chosen working brand for product implementation. This file does not certify trademark availability, domain ownership, company-name availability, or app-store acceptance. Before public distribution, perform appropriate trademark and naming checks in intended markets and confirm domain availability and pricing at checkout.
+
+## Current desktop workflow direction — 2026-10-26
+
+The user explicitly requested VLC-compatible player flows and UI organization. This supersedes the earlier editorial-shell preference where they conflict. Preserve RelayN’s approved abstract N assets, spelling, palette and voice; use familiar menus and native playback workflows. Do not use VLC’s cone/logo or claim affiliation with VideoLAN. Native behavior must be implemented and verified before a feature is advertised.

@@ -1,1 +1,1 @@
-{"main":{"identifier":"main","description":"Local main-window controls and file drop events","local":true,"windows":["main"],"permissions":["core:default","core:window:allow-set-fullscreen","core:window:allow-is-fullscreen"]}}
+{"main":{"identifier":"main","description":"Local main-window controls and file drop events","local":true,"windows":["main"],"permissions":["core:default","core:window:allow-set-fullscreen","core:window:allow-is-fullscreen","core:window:allow-set-title","core:window:allow-set-always-on-top","core:window:allow-close"]}}

@@ -1,4 +1,4 @@
-import {useState, useEffect, useRef} from 'react';
+import { useState, useEffect, useRef } from "react";
 import {
   AudioLines,
   Bookmark,
@@ -23,15 +23,15 @@ import {
   StepForward,
   Subtitles,
   Volume2,
-  VolumeX
-} from 'lucide-react';
-import {formatTime} from '../player';
-import {mediaKind, mediaTitle} from '../media';
-import type {PlayerController} from '../usePlayer';
+  VolumeX,
+} from "lucide-react";
+import { formatTime } from "../player";
+import { mediaKind, mediaTitle } from "../media";
+import type { PlayerController } from "../usePlayer";
 
 interface TransportProps {
   player: PlayerController;
-  viewMode: 'video' | 'playlist';
+  viewMode: "video" | "playlist";
   onToggleViewMode: () => void;
   loopA: number | null;
   loopB: number | null;
@@ -49,6 +49,7 @@ interface TransportProps {
   onAudioDelayChange: (val: number) => void;
   subDelay: number;
   onSubDelayChange: (val: number) => void;
+  onPopoverChange?: (open: boolean) => void;
 }
 
 export default function Transport({
@@ -70,52 +71,93 @@ export default function Transport({
   audioDelay,
   onAudioDelayChange,
   subDelay,
-  onSubDelayChange
+  onSubDelayChange,
+  onPopoverChange,
 }: TransportProps) {
-  const {state: {playback: p, settings: s}, call, seeking, setSeeking} = player;
-  const current = s.playlist.find(i => i.id === s.current);
-  const busy = ['opening', 'buffering'].includes(p.state);
-  const isVideo = current ? mediaKind(current.name) === 'video' : false;
+  const {
+    state: { playback: p, settings: s },
+    call,
+    seeking,
+    setSeeking,
+  } = player;
+  const current = s.playlist.find((i) => i.id === s.current);
+  const busy = ["opening", "buffering"].includes(p.state);
+  const isVideo = current ? mediaKind(current.name) === "video" : false;
 
   const [showRemaining, setShowRemaining] = useState(false);
-  const [activePopover, setActivePopover] = useState<'audio' | 'subtitle' | 'aspect' | 'speed' | null>(null);
+  const [activePopover, setActivePopover] = useState<
+    "audio" | "subtitle" | "aspect" | "speed" | null
+  >(null);
+
+  useEffect(() => {
+    onPopoverChange?.(activePopover !== null);
+    return () => onPopoverChange?.(false);
+  }, [activePopover, onPopoverChange]);
+  useEffect(() => {
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && activePopover) {
+        event.stopPropagation();
+        setActivePopover(null);
+      }
+    };
+    window.addEventListener("keydown", close, true);
+    return () => window.removeEventListener("keydown", close, true);
+  }, [activePopover]);
 
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // Close popover when clicking outside
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node)
+      ) {
         setActivePopover(null);
       }
     };
     if (activePopover) {
-      document.addEventListener('mousedown', handleOutsideClick);
-      return () => document.removeEventListener('mousedown', handleOutsideClick);
+      document.addEventListener("mousedown", handleOutsideClick);
+      return () =>
+        document.removeEventListener("mousedown", handleOutsideClick);
     }
   }, [activePopover]);
 
   const seekBy = (deltaMs: number) => {
     if (p.seekable) {
-      const next = p.duration > 0
-        ? Math.min(p.duration, Math.max(0, p.time + deltaMs))
-        : Math.max(0, p.time + deltaMs);
-      void call('seek', next);
+      const next =
+        p.duration > 0
+          ? Math.min(p.duration, Math.max(0, p.time + deltaMs))
+          : Math.max(0, p.time + deltaMs);
+      void call("seek", next);
     }
   };
 
-  const displayDuration = p.duration > 0
-    ? (showRemaining ? `-${formatTime(Math.max(0, p.duration - p.time))}` : formatTime(p.duration))
-    : (current ? '—' : '0:00');
+  const displayDuration =
+    p.duration > 0
+      ? showRemaining
+        ? `-${formatTime(Math.max(0, p.duration - p.time))}`
+        : formatTime(p.duration)
+      : current
+        ? "—"
+        : "0:00";
 
-  const loopAPercent = loopA !== null && p.duration > 0 ? (loopA / p.duration) * 100 : null;
-  const loopBPercent = loopB !== null && p.duration > 0 ? (loopB / p.duration) * 100 : null;
+  const loopAPercent =
+    loopA !== null && p.duration > 0 ? (loopA / p.duration) * 100 : null;
+  const loopBPercent =
+    loopB !== null && p.duration > 0 ? (loopB / p.duration) * 100 : null;
 
   return (
-    <footer className="vlc-player-dock" ref={popoverRef} aria-label="Playback controls">
+    <footer
+      className="vlc-player-dock"
+      ref={popoverRef}
+      aria-label="Playback controls"
+    >
       {/* ================= TOP: TIMELINE & PROGRESS ================= */}
       <div className="vlc-dock-timeline">
-        <span className="mono time-label elapsed">{formatTime(seeking ?? p.time)}</span>
+        <span className="mono time-label elapsed">
+          {formatTime(seeking ?? p.time)}
+        </span>
 
         <div className="vlc-scrubber-track">
           <input
@@ -125,25 +167,40 @@ export default function Transport({
             max={Math.max(1, p.duration)}
             value={seeking ?? Math.min(p.time, p.duration)}
             disabled={!p.seekable || p.duration <= 0}
-            onChange={e => setSeeking(Number(e.target.value))}
-            onPointerUp={e => {
-              void call('seek', Number(e.currentTarget.value));
+            onChange={(e) => setSeeking(Number(e.target.value))}
+            onPointerUp={(e) => {
+              void call("seek", Number(e.currentTarget.value));
               setSeeking(null);
             }}
-            onKeyUp={e => {
-              void call('seek', Number(e.currentTarget.value));
+            onKeyUp={(e) => {
+              if (
+                ![
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "ArrowUp",
+                  "ArrowDown",
+                  "Home",
+                  "End",
+                  "PageUp",
+                  "PageDown",
+                ].includes(e.key)
+              )
+                return;
+              void call("seek", Number(e.currentTarget.value));
               setSeeking(null);
             }}
             onBlur={() => setSeeking(null)}
-            style={{
-              '--progress': `${p.duration ? (100 * (seeking ?? p.time)) / p.duration : 0}%`
-            } as React.CSSProperties}
+            style={
+              {
+                "--progress": `${p.duration ? (100 * (seeking ?? p.time)) / p.duration : 0}%`,
+              } as React.CSSProperties
+            }
           />
 
           {loopAPercent !== null && (
             <div
               className="vlc-loop-marker marker-a"
-              style={{left: `${loopAPercent}%`}}
+              style={{ left: `${loopAPercent}%` }}
               title={`Point A: ${formatTime(loopA!)}`}
             />
           )}
@@ -151,7 +208,7 @@ export default function Transport({
           {loopBPercent !== null && (
             <div
               className="vlc-loop-marker marker-b"
-              style={{left: `${loopBPercent}%`}}
+              style={{ left: `${loopBPercent}%` }}
               title={`Point B: ${formatTime(loopB!)}`}
             />
           )}
@@ -161,7 +218,7 @@ export default function Transport({
           type="button"
           className="mono time-label duration duration-toggle-btn"
           title="Click to toggle remaining time"
-          onClick={() => setShowRemaining(prev => !prev)}
+          onClick={() => setShowRemaining((prev) => !prev)}
         >
           {displayDuration}
         </button>
@@ -174,10 +231,10 @@ export default function Transport({
           {/* Previous Track */}
           <button
             className="vlc-btn"
-            title="Previous (⌘←)"
+            title="Previous (Ctrl+←)"
             aria-label="Previous"
             disabled={!s.playlist.length}
-            onClick={() => call('previous')}
+            onClick={() => call("previous")}
           >
             <SkipBack size={16} />
           </button>
@@ -197,13 +254,15 @@ export default function Transport({
           <button
             className="vlc-btn-play"
             title="Play / Pause (Space)"
-            aria-label={p.state === 'playing' ? 'Pause' : 'Play'}
-            disabled={!s.playlist.length || busy}
-            onClick={() => call('toggle')}
+            aria-label={p.state === "playing" ? "Pause" : "Play"}
+            disabled={busy}
+            onClick={() =>
+              s.playlist.length ? call("toggle") : player.open(true)
+            }
           >
             {busy ? (
               <Loader2 size={19} className="spin" />
-            ) : p.state === 'playing' ? (
+            ) : p.state === "playing" ? (
               <Pause size={18} fill="currentColor" />
             ) : (
               <Play size={18} fill="currentColor" />
@@ -224,10 +283,10 @@ export default function Transport({
           {/* Next Track */}
           <button
             className="vlc-btn"
-            title="Next (⌘→)"
+            title="Next (Ctrl+→)"
             aria-label="Next"
             disabled={!s.playlist.length}
-            onClick={() => call('next')}
+            onClick={() => call("next")}
           >
             <SkipForward size={16} />
           </button>
@@ -238,7 +297,7 @@ export default function Transport({
             title="Stop (S)"
             aria-label="Stop"
             disabled={!current}
-            onClick={() => call('stop')}
+            onClick={() => call("stop")}
           >
             <Square size={13} />
           </button>
@@ -258,21 +317,30 @@ export default function Transport({
 
           {/* A-B Loop Button */}
           <button
-            className={`vlc-btn vlc-ab-btn ${loopA !== null ? 'active' : ''}`}
-            title={loopA === null ? 'A-B Loop: Set Point A (L)' : loopB === null ? 'A-B Loop: Set Point B (L)' : 'A-B Loop: Clear Loop (L)'}
+            className={`vlc-btn vlc-ab-btn ${loopA !== null ? "active" : ""}`}
+            title={
+              loopA === null
+                ? "A-B Loop: Set Point A (L)"
+                : loopB === null
+                  ? "A-B Loop: Set Point B (L)"
+                  : "A-B Loop: Clear Loop (L)"
+            }
             aria-label="A-B Loop"
             disabled={!p.seekable}
             onClick={onToggleAbLoop}
           >
             <Repeat size={14} />
-            <span className="vlc-badge">{loopA === null ? 'A' : loopB === null ? 'B' : 'A-B'}</span>
+            <span className="vlc-badge">
+              {loopA === null ? "A" : loopB === null ? "B" : "A-B"}
+            </span>
           </button>
 
           {/* Shuffle Toggle Button */}
           <button
-            className={`vlc-btn ${shuffle ? 'active' : ''}`}
-            title={shuffle ? 'Shuffle: On' : 'Shuffle: Off'}
+            className={`vlc-btn ${shuffle ? "active" : ""}`}
+            title={shuffle ? "Shuffle: On" : "Shuffle: Off"}
             aria-label="Shuffle"
+            aria-pressed={shuffle}
             onClick={onToggleShuffle}
           >
             <Shuffle size={14} />
@@ -284,22 +352,32 @@ export default function Transport({
               className="vlc-btn"
               title="Mute / Unmute (M)"
               aria-label="Mute"
-              onClick={() => call('mute')}
+              aria-pressed={s.muted}
+              onClick={() => call("mute")}
             >
-              {s.muted || s.volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              {s.muted || s.volume === 0 ? (
+                <VolumeX size={16} />
+              ) : (
+                <Volume2 size={16} />
+              )}
             </button>
-            <div className="vlc-volume-slider-box" title={`Volume: ${s.volume}%`}>
+            <div
+              className="vlc-volume-slider-box"
+              title={`Volume: ${s.volume}%`}
+            >
               <input
-                className={`vlc-volume-slider ${s.volume > 100 ? 'boosted' : ''}`}
+                className={`vlc-volume-slider ${s.volume > 100 ? "boosted" : ""}`}
                 aria-label="Volume"
                 type="range"
                 min="0"
                 max="150"
                 value={s.volume}
-                onChange={e => call('volume', Number(e.target.value))}
+                onChange={(e) => call("volume", Number(e.target.value))}
               />
             </div>
-            <span className={`mono vlc-vol-text ${s.volume > 100 ? 'boosted' : ''}`}>
+            <span
+              className={`mono vlc-vol-text ${s.volume > 100 ? "boosted" : ""}`}
+            >
               {s.volume}%
             </span>
           </div>
@@ -309,12 +387,18 @@ export default function Transport({
         <div className="vlc-control-group group-center">
           {current ? (
             <div className="vlc-now-playing-pill" title={current.path}>
-              <span className="mono chip-ext">{current.name.split('.').pop()?.toUpperCase()}</span>
-              <span className="title-text">{mediaTitle(p.title || current.name)}</span>
+              <span className="mono chip-ext">
+                {current.name.split(".").pop()?.toUpperCase()}
+              </span>
+              <span className="title-text">
+                {mediaTitle(p.title || current.name)}
+              </span>
               {p.artist && <span className="artist-text">· {p.artist}</span>}
             </div>
           ) : (
-            <span className="vlc-idle-text">Drop media or open file (⌘O)</span>
+            <span className="vlc-idle-text">
+              Drop media or open file (Ctrl+O)
+            </span>
           )}
         </div>
 
@@ -323,29 +407,33 @@ export default function Transport({
           {/* Audio Tracks Popover Button */}
           <div className="vlc-popover-anchor">
             <button
-              className={`vlc-btn ${activePopover === 'audio' ? 'active' : ''}`}
+              className={`vlc-btn ${activePopover === "audio" ? "active" : ""}`}
               title="Audio Tracks & Delay"
               aria-label="Audio Tracks"
-              onClick={() => setActivePopover(prev => prev === 'audio' ? null : 'audio')}
+              onClick={() =>
+                setActivePopover((prev) => (prev === "audio" ? null : "audio"))
+              }
             >
               <AudioLines size={15} />
             </button>
 
-            {activePopover === 'audio' && (
+            {activePopover === "audio" && (
               <div className="vlc-popover-menu">
                 <div className="popover-title">Audio Tracks</div>
                 <div className="popover-list">
                   {p.audio_tracks.length ? (
-                    p.audio_tracks.map(t => (
+                    p.audio_tracks.map((t) => (
                       <button
                         key={t.id}
-                        className={`popover-item ${p.audio_track === t.id ? 'selected' : ''}`}
+                        className={`popover-item ${p.audio_track === t.id ? "selected" : ""}`}
                         onClick={() => {
-                          void call('audio', t.id);
+                          void call("audio", t.id);
                           setActivePopover(null);
                         }}
                       >
-                        {p.audio_track === t.id && <Check size={13} className="item-check" />}
+                        {p.audio_track === t.id && (
+                          <Check size={13} className="item-check" />
+                        )}
                         <span>{t.name}</span>
                       </button>
                     ))
@@ -358,9 +446,21 @@ export default function Transport({
                 <div className="popover-sync-row">
                   <span>Lipsync Delay:</span>
                   <div className="sync-nudge-group">
-                    <button className="sync-btn" onClick={() => onAudioDelayChange(audioDelay - 50)}>-50ms</button>
-                    <span className="mono sync-val">{audioDelay > 0 ? `+${audioDelay}` : audioDelay}ms</span>
-                    <button className="sync-btn" onClick={() => onAudioDelayChange(audioDelay + 50)}>+50ms</button>
+                    <button
+                      className="sync-btn"
+                      onClick={() => onAudioDelayChange(audioDelay - 50)}
+                    >
+                      -50ms
+                    </button>
+                    <span className="mono sync-val">
+                      {audioDelay > 0 ? `+${audioDelay}` : audioDelay}ms
+                    </span>
+                    <button
+                      className="sync-btn"
+                      onClick={() => onAudioDelayChange(audioDelay + 50)}
+                    >
+                      +50ms
+                    </button>
                   </div>
                 </div>
               </div>
@@ -370,41 +470,51 @@ export default function Transport({
           {/* Subtitles Popover Button */}
           <div className="vlc-popover-anchor">
             <button
-              className={`vlc-btn ${activePopover === 'subtitle' ? 'active' : ''}`}
+              className={`vlc-btn ${activePopover === "subtitle" ? "active" : ""}`}
               title="Subtitles & Delay"
               aria-label="Subtitles"
-              onClick={() => setActivePopover(prev => prev === 'subtitle' ? null : 'subtitle')}
+              onClick={() =>
+                setActivePopover((prev) =>
+                  prev === "subtitle" ? null : "subtitle",
+                )
+              }
             >
               <Subtitles size={15} />
             </button>
 
-            {activePopover === 'subtitle' && (
+            {activePopover === "subtitle" && (
               <div className="vlc-popover-menu">
                 <div className="popover-title">Subtitle Tracks</div>
                 <div className="popover-list">
                   <button
-                    className={`popover-item ${p.subtitle_track === -1 ? 'selected' : ''}`}
+                    className={`popover-item ${p.subtitle_track === -1 ? "selected" : ""}`}
                     onClick={() => {
-                      void call('subtitle', -1);
+                      void call("subtitle", -1);
                       setActivePopover(null);
                     }}
                   >
-                    {p.subtitle_track === -1 && <Check size={13} className="item-check" />}
+                    {p.subtitle_track === -1 && (
+                      <Check size={13} className="item-check" />
+                    )}
                     <span>Disable Subtitles</span>
                   </button>
-                  {p.subtitle_tracks.map(t => (
-                    <button
-                      key={t.id}
-                      className={`popover-item ${p.subtitle_track === t.id ? 'selected' : ''}`}
-                      onClick={() => {
-                        void call('subtitle', t.id);
-                        setActivePopover(null);
-                      }}
-                    >
-                      {p.subtitle_track === t.id && <Check size={13} className="item-check" />}
-                      <span>{t.name}</span>
-                    </button>
-                  ))}
+                  {p.subtitle_tracks
+                    .filter((t) => t.id >= 0)
+                    .map((t) => (
+                      <button
+                        key={t.id}
+                        className={`popover-item ${p.subtitle_track === t.id ? "selected" : ""}`}
+                        onClick={() => {
+                          void call("subtitle", t.id);
+                          setActivePopover(null);
+                        }}
+                      >
+                        {p.subtitle_track === t.id && (
+                          <Check size={13} className="item-check" />
+                        )}
+                        <span>{t.name}</span>
+                      </button>
+                    ))}
                 </div>
 
                 <div className="popover-divider" />
@@ -422,9 +532,21 @@ export default function Transport({
                 <div className="popover-sync-row">
                   <span>Subtitle Delay:</span>
                   <div className="sync-nudge-group">
-                    <button className="sync-btn" onClick={() => onSubDelayChange(subDelay - 50)}>-50ms</button>
-                    <span className="mono sync-val">{subDelay > 0 ? `+${subDelay}` : subDelay}ms</span>
-                    <button className="sync-btn" onClick={() => onSubDelayChange(subDelay + 50)}>+50ms</button>
+                    <button
+                      className="sync-btn"
+                      onClick={() => onSubDelayChange(subDelay - 50)}
+                    >
+                      -50ms
+                    </button>
+                    <span className="mono sync-val">
+                      {subDelay > 0 ? `+${subDelay}` : subDelay}ms
+                    </span>
+                    <button
+                      className="sync-btn"
+                      onClick={() => onSubDelayChange(subDelay + 50)}
+                    >
+                      +50ms
+                    </button>
                   </div>
                 </div>
               </div>
@@ -434,36 +556,42 @@ export default function Transport({
           {/* Aspect & Crop Popover Button */}
           <div className="vlc-popover-anchor">
             <button
-              className={`vlc-btn ${activePopover === 'aspect' ? 'active' : ''}`}
+              className={`vlc-btn ${activePopover === "aspect" ? "active" : ""}`}
               title="Aspect & Crop"
               aria-label="Aspect and Crop"
-              onClick={() => setActivePopover(prev => prev === 'aspect' ? null : 'aspect')}
+              onClick={() =>
+                setActivePopover((prev) =>
+                  prev === "aspect" ? null : "aspect",
+                )
+              }
             >
               <Crop size={15} />
             </button>
 
-            {activePopover === 'aspect' && (
+            {activePopover === "aspect" && (
               <div className="vlc-popover-menu">
                 <div className="popover-title">Aspect Ratio</div>
                 <div className="popover-list">
                   {[
-                    {id: '', label: 'Original Ratio'},
-                    {id: '16:9', label: '16:9 Widescreen'},
-                    {id: '16:10', label: '16:10 Monitor'},
-                    {id: '4:3', label: '4:3 Classic TV'},
-                    {id: '1:1', label: '1:1 Square'},
-                    {id: '2.35:1', label: '2.35:1 CinemaScope'},
-                    {id: '21:9', label: '21:9 UltraWide'}
-                  ].map(a => (
+                    { id: "", label: "Original Ratio" },
+                    { id: "16:9", label: "16:9 Widescreen" },
+                    { id: "16:10", label: "16:10 Monitor" },
+                    { id: "4:3", label: "4:3 Classic TV" },
+                    { id: "1:1", label: "1:1 Square" },
+                    { id: "2.35:1", label: "2.35:1 CinemaScope" },
+                    { id: "21:9", label: "21:9 UltraWide" },
+                  ].map((a) => (
                     <button
                       key={a.id}
-                      className={`popover-item ${s.aspect === a.id ? 'selected' : ''}`}
+                      className={`popover-item ${s.aspect === a.id ? "selected" : ""}`}
                       onClick={() => {
-                        void call('aspect', undefined, a.id);
+                        void call("aspect", undefined, a.id);
                         setActivePopover(null);
                       }}
                     >
-                      {s.aspect === a.id && <Check size={13} className="item-check" />}
+                      {s.aspect === a.id && (
+                        <Check size={13} className="item-check" />
+                      )}
                       <span>{a.label}</span>
                     </button>
                   ))}
@@ -473,21 +601,22 @@ export default function Transport({
                 <div className="popover-title">Video Crop</div>
                 <div className="popover-list">
                   {[
-                    {id: 'none', label: 'No Crop (Fit)'},
-                    {id: 'fill', label: 'Fill Window (Stretch)'},
-                    {id: '16:9', label: 'Crop 16:9'},
-                    {id: '4:3', label: 'Crop 4:3'},
-                    {id: '2.35:1', label: 'Crop 2.35:1'}
-                  ].map(c => (
+                    { id: "none", label: "No Crop (Fit)" },
+                    { id: "16:9", label: "Crop 16:9" },
+                    { id: "4:3", label: "Crop 4:3" },
+                    { id: "2.35:1", label: "Crop 2.35:1" },
+                  ].map((c) => (
                     <button
                       key={c.id}
-                      className={`popover-item ${cropRatio === c.id ? 'selected' : ''}`}
+                      className={`popover-item ${cropRatio === c.id ? "selected" : ""}`}
                       onClick={() => {
                         onSetCropRatio(c.id);
                         setActivePopover(null);
                       }}
                     >
-                      {cropRatio === c.id && <Check size={13} className="item-check" />}
+                      {cropRatio === c.id && (
+                        <Check size={13} className="item-check" />
+                      )}
                       <span>{c.label}</span>
                     </button>
                   ))}
@@ -499,35 +628,39 @@ export default function Transport({
           {/* Speed Popover Button */}
           <div className="vlc-popover-anchor">
             <button
-              className={`vlc-btn mono ${activePopover === 'speed' ? 'active' : ''}`}
+              className={`vlc-btn mono ${activePopover === "speed" ? "active" : ""}`}
               title="Playback Speed ([ / ])"
               aria-label="Speed"
-              onClick={() => setActivePopover(prev => prev === 'speed' ? null : 'speed')}
+              onClick={() =>
+                setActivePopover((prev) => (prev === "speed" ? null : "speed"))
+              }
             >
               {s.rate.toFixed(s.rate % 1 ? 2 : 1)}×
             </button>
 
-            {activePopover === 'speed' && (
+            {activePopover === "speed" && (
               <div className="vlc-popover-menu speed-menu">
                 <div className="popover-title">Playback Speed</div>
                 <div className="popover-grid">
-                  {[0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0, 4.0].map(r => (
-                    <button
-                      key={r}
-                      className={`speed-grid-btn mono ${s.rate === r ? 'active' : ''}`}
-                      onClick={() => {
-                        void call('rate', r);
-                        setActivePopover(null);
-                      }}
-                    >
-                      {r.toFixed(r % 1 ? 2 : 1)}×
-                    </button>
-                  ))}
+                  {[0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0, 4.0].map(
+                    (r) => (
+                      <button
+                        key={r}
+                        className={`speed-grid-btn mono ${s.rate === r ? "active" : ""}`}
+                        onClick={() => {
+                          void call("rate", r);
+                          setActivePopover(null);
+                        }}
+                      >
+                        {r.toFixed(r % 1 ? 2 : 1)}×
+                      </button>
+                    ),
+                  )}
                 </div>
                 <button
                   className="popover-action-btn"
                   onClick={() => {
-                    void call('rate', 1.0);
+                    void call("rate", 1.0);
                     setActivePopover(null);
                   }}
                 >
@@ -537,10 +670,10 @@ export default function Transport({
             )}
           </div>
 
-          {/* Jump to Time Button (⌘T) */}
+          {/* Jump to Time Button (Ctrl+T) */}
           <button
             className="vlc-btn"
-            title="Jump to Time (⌘T)"
+            title="Jump to Time (Ctrl+T)"
             aria-label="Jump to Time"
             disabled={!current}
             onClick={onOpenJump}
@@ -548,10 +681,10 @@ export default function Transport({
             <Clock size={15} />
           </button>
 
-          {/* Bookmarks Manager (⌘B) */}
+          {/* Bookmarks Manager (Ctrl+B) */}
           <button
             className="vlc-btn"
-            title="Bookmarks (⌘B)"
+            title="Bookmarks (Ctrl+B)"
             aria-label="Bookmarks"
             disabled={!current}
             onClick={onOpenBookmarks}
@@ -559,11 +692,11 @@ export default function Transport({
             <Bookmark size={15} />
           </button>
 
-          {/* Snapshot Button (⌘⌥S) */}
+          {/* Snapshot Button (Ctrl+⌥S) */}
           {isVideo && (
             <button
               className="vlc-btn"
-              title="Snapshot (⌘S)"
+              title="Snapshot (Ctrl+S)"
               aria-label="Snapshot"
               disabled={!current}
               onClick={onSnapshot}
@@ -572,25 +705,27 @@ export default function Transport({
             </button>
           )}
 
-          {/* Audio & Video Effects Button (⌘E) */}
+          {/* Audio & Video Effects Button (Ctrl+E) */}
           <button
             className="vlc-btn"
-            title="Audio & Video Effects (⌘E)"
+            title="Audio & Video Effects (Ctrl+E)"
             aria-label="Effects"
             onClick={onOpenEffects}
           >
             <Sliders size={15} />
           </button>
 
-          {/* Playlist View Toggle Button (⌘L) */}
+          {/* Playlist View Toggle Button (Ctrl+L) */}
           <button
-            className={`vlc-btn ${viewMode === 'playlist' ? 'active' : ''}`}
-            title="Toggle Playlist View (⌘L)"
+            className={`vlc-btn ${viewMode === "playlist" ? "active" : ""}`}
+            title="Toggle Playlist View (Ctrl+L)"
             aria-label="Playlist View"
             onClick={onToggleViewMode}
           >
             <ListMusic size={16} />
-            {s.playlist.length > 0 && <span className="vlc-badge">{s.playlist.length}</span>}
+            {s.playlist.length > 0 && (
+              <span className="vlc-badge">{s.playlist.length}</span>
+            )}
           </button>
 
           {/* Fullscreen Button (F) */}

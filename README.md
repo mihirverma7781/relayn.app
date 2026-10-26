@@ -2,7 +2,7 @@
 
 An original, local-first desktop media player built with Tauri 2, React, TypeScript, Rust and libVLC 3. The implementation is an MVP undergoing native verification; it is not yet a production release.
 
-The approved abstract N logo originals live in `assets/brand/`. The header uses the sage symbol; the favicon and generated Windows/macOS icons use the supplied app icon. See `branding.md` and `design.md` for variant usage and regeneration instructions.
+The approved abstract N logo originals live in `assets/brand/`. The empty player uses the sage symbol; the favicon and generated Windows/macOS icons use the supplied app icon. See `branding.md` and `design.md` for variant usage and regeneration instructions.
 
 ## Run
 
@@ -20,14 +20,18 @@ The runtime command downloads the architecture-matched **VLC 3.0.24** archive fr
 ## Features implemented
 
 - Real libVLC playback through a native HWND on Windows / NSView on macOS.
-- Native file selection, multiple files, desktop drag-and-drop and UTF-8 local M3U/M3U8 import/export.
-- Play/pause, stop, previous/next, seeking, volume/mute, speed, repeat and playlist reordering/removal/search.
+- Native file selection, multiple files, desktop drag-and-drop, bounded recursive folder opening and UTF-8 local M3U/M3U8 import/export.
+- Explicit HTTP/HTTPS/RTSP stream opening through libVLC, with URL validation and embedded credentials rejected.
+- Play/pause, stop, previous/next, seeking, volume/mute (0–150%), speed, repeat, native shuffle and playlist reordering/removal/search.
+- Engine-owned A/B repeat, real frame advance, chapter navigation, supported audio channel selection and native Save PNG snapshot dialog.
+- Ten-band libVLC equalizer/preamp and native brightness, contrast, saturation, hue, gamma, audio delay and subtitle delay.
 - Subtitle files and embedded subtitle/audio track selection using libVLC track IDs.
-- Original / 16:9 / 4:3 / 1:1 / 21:9 aspect ratios and application fullscreen.
+- Original / 16:9 / 16:10 / 4:3 / 1:1 / 2.35:1 / 2.39:1 / 21:9 aspect and crop ratios, application fullscreen and always on top.
+- VLC-style command menus, player/playlist views, keyboard queue editing, per-file bookmarks, Jump to Time, Media Information and real Preferences.
 - Title/artist/album, duration, track information and actionable file/runtime errors.
-- Local persistence of playlist, current selection, volume, mute, rate, aspect ratio and repeat mode. Restoring a session does not automatically start playback.
+- Local persistence of playlist, current selection, volume, mute, rate, aspect/crop ratios, native effects, EQ, shuffle and repeat mode. Restoring a session does not automatically start playback.
 
-Tracks and metadata appear after libVLC has opened the media. Format support depends on the bundled runtime's plugins and the contents of each file; an extension alone does not establish compatibility. Network streams, disc menus, DRM, casting and media-library indexing are outside the current MVP.
+Tracks and metadata appear after libVLC has opened the media. Format support depends on the bundled runtime's plugins and the contents of each file; an extension alone does not establish compatibility. Disc menus, capture/recording, conversion/transcoding, casting, DRM and media-library indexing remain unavailable. See docs/VLC_PARITY.md for the full gap ledger. Network playlist entries are not imported from M3U files; network opening is explicit.
 
 ## Shortcuts
 
@@ -37,14 +41,20 @@ Tracks and metadata appear after libVLC has opened the media. Format support dep
 | Play / pause | Space |
 | Stop | S |
 | Previous / next | P / N |
-| Seek backward / forward 10 seconds | Left / Right |
-| Volume / mute | Up or Down / M |
+| Seek 3 / 10 / 60 / 300 seconds | Shift / Alt (or unmodified) / Ctrl / Ctrl+Alt + Left or Right |
+| Volume / mute | Ctrl+Up or Ctrl+Down (also Up/Down) / M |
 | Fullscreen / leave fullscreen | F / Esc |
 | Cycle audio / subtitles | B / V |
 | Cycle aspect ratio | A |
 | Slower / faster | - / + |
 
-Shortcuts do not intercept typing in form fields. Native video focus and drag/drop need platform acceptance testing.
+| Open folder / network | Ctrl+F / Ctrl+N |
+| Preferences / Effects / Information | Ctrl+P / Ctrl+E / Ctrl+I |
+| Playlist / Save playlist | Ctrl+L / Ctrl+Y |
+| Jump / Bookmarks | Ctrl+T / Ctrl+B |
+| Next frame / Snapshot / A–B loop | E / Shift+S / L |
+
+Shortcuts do not intercept typing in form fields or playback while a dialog is open. Ctrl command modifiers also accept Cmd on macOS; native macOS acceptance remains outstanding. Native video focus and drag/drop need platform acceptance testing.
 
 ## Architecture
 
@@ -66,7 +76,7 @@ npm run native:integration
 
 The ignored native integration test requires staged libVLC and generated fixtures. It exercises Rust-to-libVLC playback, pause, seek, subtitle loading, corrupt media error reporting and saved settings with dummy video/audio output. It does not prove visible rendering or audible output. The deterministic fixtures are original six-second WAV/AVI clips and an SRT file.
 
-The existing browser smoke test in `work/` verifies interface loading and modal controls. It is a development artifact, not a substitute for native desktop acceptance tests.
+Historical smoke scripts in work/ target the prior UI and are not the current verification source. Current parity and acceptance results are recorded in docs/VLC_PARITY.md; automated headless tests do not prove audible output or native visual behavior.
 
 ## Package
 
@@ -74,7 +84,7 @@ The existing browser smoke test in `work/` verifies interface loading and modal 
 npm run package
 ```
 
-Windows configuration targets MSI. NSIS is also available via `npm run tauri -- build --bundles nsis`, but its compiler could not launch in an earlier session (Windows error 623). macOS targets an application bundle and DMG. The GitHub workflow defines Windows x64, macOS ARM64 and macOS Intel builds. A user-provided macOS CI run failed during runtime preparation; a successful subsequent remote build has not been verified. A separate Mac environment is required for macOS compilation, native tests, packaging, signing and notarization.
+Windows configuration targets MSI. NSIS is also available via `npm run tauri -- build --bundles nsis`; an unsigned NSIS installer was successfully built on 2026-10-26. Installation, upgrade and uninstallation acceptance remain outstanding. macOS targets an application bundle and DMG. The GitHub workflow defines Windows x64, macOS ARM64 and macOS Intel builds. A user-provided macOS CI run failed during runtime preparation; a successful subsequent remote build has not been verified. A separate Mac environment is required for macOS compilation, native tests, packaging, signing and notarization.
 
 The macOS preparation script checks and rewrites bundled library references to loader-relative paths and signs nested dylibs with `APPLE_SIGNING_IDENTITY` (or an ad-hoc identity for development). This path requires real Mac validation. For public macOS distribution, configure Tauri's Apple signing/notarization credentials. Public Windows releases likewise need a signing identity. Test packages are unsigned development artifacts.
 

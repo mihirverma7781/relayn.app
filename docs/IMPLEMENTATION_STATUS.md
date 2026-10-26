@@ -1,4 +1,16 @@
-# Implementation status — 2026-10-24
+# Implementation status — 2026-10-26
+
+## Current milestone: VLC-compatible core workflows
+
+The player was rebuilt around familiar desktop menus, a central native picture, stable dock/status and a keyboard-editable playlist. Native shuffle, A/B looping, EQ/preamp, picture adjustments, crop, frame advance, chapters, audio channels, folder opening and explicit HTTP/HTTPS/RTSP opening replace simulated controls. Errors are visible and dialogs have focus/Escape behavior. See [VLC_PARITY.md](VLC_PARITY.md) for exact evidence and remaining subsystems.
+
+Doctor, five frontend tests, strict TypeScript/Vite, thirteen native unit tests and the extended headless integration passed. A Windows release visibly rendered the original AVI fixture with pinned libVLC3.0.24 in an isolated profile. Play/pause, native double-click fullscreen, Escape and video hiding under Effects were verified. Browser minimum-size layouts fit. An unsigned NSIS installer built successfully. Audible output, installer execution, signing and macOS acceptance remain outstanding.
+
+Full VLC parity is not complete. Disc/capture/recording, conversion/outgoing streaming, casting, complete filters/preferences, history/resume, media keys/associations and platform acceptance remain. The whole-player request stays incomplete until these are implemented and tested; no placeholder menu claims otherwise.
+
+## Historical milestone — 2026-10-24
+
+The following record describes the earlier logo milestone. Its native startup restriction is resolved for the current isolated Windows run; its artifact hashes apply only to that older build.
 
 ## Completed milestone
 

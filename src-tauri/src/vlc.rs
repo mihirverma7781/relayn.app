@@ -1,3 +1,4 @@
+use crate::model::{Equalizer, VideoAdjustments};
 use libloading::Library;
 use serde::Serialize;
 use std::{
@@ -26,6 +27,7 @@ api! {
  libvlc_media_player_new:unsafe extern "C" fn(Ptr)->Ptr,
  libvlc_media_player_release:unsafe extern "C" fn(Ptr),
  libvlc_media_new_path:unsafe extern "C" fn(Ptr,*const c_char)->Ptr,
+ libvlc_media_new_location:unsafe extern "C" fn(Ptr,*const c_char)->Ptr,
  libvlc_media_release:unsafe extern "C" fn(Ptr),
  libvlc_media_get_meta:unsafe extern "C" fn(Ptr,c_int)->*mut c_char,
  libvlc_free:unsafe extern "C" fn(Ptr),
@@ -57,7 +59,22 @@ api! {
  libvlc_audio_set_delay:unsafe extern "C" fn(Ptr,i64)->c_int,
  libvlc_video_get_spu_delay:unsafe extern "C" fn(Ptr)->i64,
  libvlc_video_set_spu_delay:unsafe extern "C" fn(Ptr,i64)->c_int,
- libvlc_video_take_snapshot:unsafe extern "C" fn(Ptr,c_int,*const c_char,c_int,c_int)->c_int
+ libvlc_video_take_snapshot:unsafe extern "C" fn(Ptr,c_int,*const c_char,c_int,c_int)->c_int,
+ libvlc_media_player_next_frame:unsafe extern "C" fn(Ptr),
+ libvlc_video_set_crop_geometry:unsafe extern "C" fn(Ptr,*const c_char),
+ libvlc_video_set_adjust_int:unsafe extern "C" fn(Ptr,u32,c_int),
+ libvlc_video_set_adjust_float:unsafe extern "C" fn(Ptr,u32,f32),
+ libvlc_audio_equalizer_new:unsafe extern "C" fn()->Ptr,
+ libvlc_audio_equalizer_release:unsafe extern "C" fn(Ptr),
+ libvlc_audio_equalizer_set_amp_at_index:unsafe extern "C" fn(Ptr,f32,u32)->c_int,
+ libvlc_audio_equalizer_set_preamp:unsafe extern "C" fn(Ptr,f32)->c_int,
+ libvlc_media_player_set_equalizer:unsafe extern "C" fn(Ptr,Ptr)->c_int,
+ libvlc_video_get_size:unsafe extern "C" fn(Ptr,u32,*mut u32,*mut u32)->c_int,
+ libvlc_media_player_get_chapter_count:unsafe extern "C" fn(Ptr)->c_int,
+ libvlc_media_player_get_chapter:unsafe extern "C" fn(Ptr)->c_int,
+ libvlc_media_player_set_chapter:unsafe extern "C" fn(Ptr,c_int),
+ libvlc_audio_get_channel:unsafe extern "C" fn(Ptr)->c_int,
+ libvlc_audio_set_channel:unsafe extern "C" fn(Ptr,c_int)->c_int
 }
 #[derive(Clone, Serialize)]
 pub struct Track {
@@ -77,6 +94,9 @@ pub struct Playback {
     pub subtitle_track: i32,
     pub audio_delay: i64,
     pub subtitle_delay: i64,
+    pub chapter: i32,
+    pub chapter_count: i32,
+    pub audio_channel: i32,
     pub title: String,
     pub artist: String,
     pub album: String,
@@ -234,9 +254,17 @@ impl Vlc {
         }
     }
     pub fn open(&mut self, path: &str) -> Result<(), String> {
+        let remote = path.contains("://");
+        if remote {
+            crate::model::network_url(path)?;
+        }
         let path = CString::new(path).map_err(|_| "File path contains a null byte")?;
         unsafe {
-            let media = (self.api.libvlc_media_new_path)(self.instance, path.as_ptr());
+            let media = if remote {
+                (self.api.libvlc_media_new_location)(self.instance, path.as_ptr())
+            } else {
+                (self.api.libvlc_media_new_path)(self.instance, path.as_ptr())
+            };
             if media.is_null() {
                 return Err("Cannot open media".into());
             }
@@ -271,7 +299,7 @@ impl Vlc {
     }
     pub fn volume(&self, v: i32, mute: bool) {
         unsafe {
-            (self.api.libvlc_audio_set_volume)(self.player, v.clamp(0, 100));
+            (self.api.libvlc_audio_set_volume)(self.player, v.clamp(0, 150));
             (self.api.libvlc_audio_set_mute)(self.player, mute as i32);
         }
     }
@@ -287,6 +315,118 @@ impl Vlc {
     pub fn aspect(&self, v: &str) {
         let v = CString::new(v).unwrap();
         unsafe { (self.api.libvlc_video_set_aspect_ratio)(self.player, v.as_ptr()) }
+    }
+    pub fn crop(&self, ratio: &str) -> Result<(), String> {
+        if !crate::model::ASPECTS.contains(&ratio) {
+            return Err("Unsupported crop ratio".into());
+        }
+        let ratio = CString::new(ratio).map_err(|_| "Invalid crop ratio")?;
+        unsafe {
+            (self.api.libvlc_video_set_crop_geometry)(self.player, ratio.as_ptr());
+        }
+        Ok(())
+    }
+    pub fn adjustments(&self, value: &VideoAdjustments) -> Result<(), String> {
+        value.validate()?;
+        unsafe {
+            (self.api.libvlc_video_set_adjust_int)(
+                self.player,
+                0,
+                i32::from(value != &VideoAdjustments::default()),
+            );
+            (self.api.libvlc_video_set_adjust_float)(self.player, 1, value.contrast / 100.);
+            (self.api.libvlc_video_set_adjust_float)(self.player, 2, 1. + value.brightness / 100.);
+            (self.api.libvlc_video_set_adjust_float)(self.player, 3, value.hue);
+            (self.api.libvlc_video_set_adjust_float)(self.player, 4, value.saturation / 100.);
+            (self.api.libvlc_video_set_adjust_float)(self.player, 5, value.gamma);
+        }
+        Ok(())
+    }
+    pub fn equalizer(&self, value: &Equalizer) -> Result<(), String> {
+        value.validate()?;
+        unsafe {
+            if !value.enabled {
+                return if (self.api.libvlc_media_player_set_equalizer)(self.player, ptr::null_mut())
+                    == 0
+                {
+                    Ok(())
+                } else {
+                    Err("Cannot disable equalizer".into())
+                };
+            }
+            let eq = (self.api.libvlc_audio_equalizer_new)();
+            if eq.is_null() {
+                return Err("Cannot create native equalizer".into());
+            }
+            let result = (|| {
+                if (self.api.libvlc_audio_equalizer_set_preamp)(eq, value.preamp) != 0 {
+                    return Err("Cannot set equalizer preamp".into());
+                }
+                for (index, amp) in value.bands.iter().enumerate() {
+                    if (self.api.libvlc_audio_equalizer_set_amp_at_index)(eq, *amp, index as u32)
+                        != 0
+                    {
+                        return Err("Cannot set equalizer band".into());
+                    }
+                }
+                if (self.api.libvlc_media_player_set_equalizer)(self.player, eq) != 0 {
+                    return Err("Cannot apply equalizer to this audio output".into());
+                }
+                Ok(())
+            })();
+            (self.api.libvlc_audio_equalizer_release)(eq);
+            result
+        }
+    }
+    pub fn next_frame(&self) -> Result<(), String> {
+        self.require_video()?;
+        unsafe {
+            (self.api.libvlc_media_player_next_frame)(self.player);
+        }
+        Ok(())
+    }
+    pub fn require_video(&self) -> Result<(), String> {
+        let (mut width, mut height) = (0, 0);
+        unsafe {
+            if (self.api.libvlc_video_get_size)(self.player, 0, &mut width, &mut height) != 0
+                || width == 0
+                || height == 0
+            {
+                return Err("No active video track is available".into());
+            }
+        }
+        Ok(())
+    }
+    pub fn chapter(&self, target: i32) -> Result<(), String> {
+        unsafe {
+            let count = (self.api.libvlc_media_player_get_chapter_count)(self.player);
+            if target < 0 || target >= count {
+                return Err("This chapter is unavailable for the current media".into());
+            }
+            (self.api.libvlc_media_player_set_chapter)(self.player, target);
+        }
+        Ok(())
+    }
+    pub fn audio_channel(&self, channel: i32) -> Result<(), String> {
+        if !(1..=5).contains(&channel) {
+            return Err("Unsupported audio channel mode".into());
+        }
+        unsafe {
+            if (self.api.libvlc_audio_set_channel)(self.player, channel) != 0 {
+                return Err("This audio output does not support the selected channel mode".into());
+            }
+        }
+        Ok(())
+    }
+    #[cfg(test)]
+    pub fn adjustment_value(&self, option: u32) -> f32 {
+        unsafe {
+            let get = self
+                ._lib
+                .get::<unsafe extern "C" fn(Ptr, u32) -> f32>(b"libvlc_video_get_adjust_float\0")
+                .unwrap();
+            get(self.player, option)
+        }
     }
     pub fn track(&self, kind: &str, id: i32) -> Result<(), String> {
         unsafe {
@@ -314,6 +454,9 @@ impl Vlc {
         }
     }
     pub fn set_audio_delay(&self, delay_ms: i64) -> Result<(), String> {
+        if !(-600000..=600000).contains(&delay_ms) {
+            return Err("Audio delay must be between -600000 and 600000 ms".into());
+        }
         unsafe {
             // libvlc delay is in microseconds
             if (self.api.libvlc_audio_set_delay)(self.player, delay_ms * 1000) == 0 {
@@ -324,6 +467,9 @@ impl Vlc {
         }
     }
     pub fn set_subtitle_delay(&self, delay_ms: i64) -> Result<(), String> {
+        if !(-600000..=600000).contains(&delay_ms) {
+            return Err("Subtitle delay must be between -600000 and 600000 ms".into());
+        }
         unsafe {
             // libvlc delay is in microseconds
             if (self.api.libvlc_video_set_spu_delay)(self.player, delay_ms * 1000) == 0 {
@@ -334,6 +480,7 @@ impl Vlc {
         }
     }
     pub fn take_snapshot(&self, path: &str) -> Result<(), String> {
+        self.require_video()?;
         let p = CString::new(path).map_err(|_| "Invalid snapshot path")?;
         unsafe {
             if (self.api.libvlc_video_take_snapshot)(self.player, 0, p.as_ptr(), 0, 0) == 0 {
@@ -400,6 +547,9 @@ impl Vlc {
                 subtitle_track: (self.api.libvlc_video_get_spu)(self.player),
                 audio_delay: (self.api.libvlc_audio_get_delay)(self.player) / 1000,
                 subtitle_delay: (self.api.libvlc_video_get_spu_delay)(self.player) / 1000,
+                chapter: (self.api.libvlc_media_player_get_chapter)(self.player),
+                chapter_count: (self.api.libvlc_media_player_get_chapter_count)(self.player).max(0),
+                audio_channel: (self.api.libvlc_audio_get_channel)(self.player),
                 title: self.meta(0),
                 artist: self.meta(1),
                 album: self.meta(4),
