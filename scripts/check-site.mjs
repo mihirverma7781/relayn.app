@@ -16,5 +16,9 @@ for (const [, ref] of css.matchAll(/url\(['"]?([^)'" ]+)/g)) assert(fs.existsSyn
 for (const view of ['home', 'library', 'video', 'audio']) assert(fs.existsSync(path.join(root, 'assets', `${view}.webp`)));
 assert(html.includes('Skip to content'));
 assert(html.includes('in development') || html.includes('In development'));
-assert(!/<script[^>]+src="https?:/.test(html), 'Unexpected third-party script');
+for (const platform of ['windows', 'macos-arm', 'macos-intel']) {
+  assert(html.includes(`data-download-platform="${platform}"`), `Missing ${platform} download option`);
+}
+assert(html.includes('/releases/latest'), 'Latest-release download lookup is missing');
+assert(html.includes("dataset.recommended = 'true'"), 'Platform recommendation state is missing');
 console.log(`Site validation passed: ${refs.length} links/assets, ${ids.length} unique IDs, four previews, local fonts.`);

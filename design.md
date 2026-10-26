@@ -116,6 +116,10 @@ Verify at 1440×900, 1180×780 and the native minimum 880×620. Reduce gutters a
 
 Do not rely on the reference's 2560 px screenshots as fixed application dimensions. The implementation must fit a real Windows/macOS desktop window without horizontal document overflow or clipped core actions.
 
+## Website download pattern
+
+The static landing page in `site/` offers Windows x64, macOS Apple Silicon and macOS Intel cards. Detect the visitor platform only to visually recommend a card; architecture detection is best-effort and the visitor can always choose another card. At runtime, cards resolve to matching assets from the latest GitHub release. If a release or its platform asset is unavailable, retain a truthful link to the Releases page and status message rather than pointing at an invented download URL. Do not advertise Linux until it has a supported build target and release artifact.
+
 ## Workflow for future agents
 
 1. Read this file and inspect the relevant current components and Stitch image/HTML references.

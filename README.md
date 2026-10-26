@@ -90,6 +90,10 @@ The macOS preparation script checks and rewrites bundled library references to l
 
 Bundled VLC libraries and plugins retain their upstream notices and runtime provenance. The corresponding source archive is recorded in `RUNTIME-PROVENANCE.txt`; review runtime/plugin distribution requirements before publishing. RelayN Player uses its own icon and interface and does not copy VLC assets.
 
+## Landing page downloads
+
+The static landing page in `site/` presents Windows x64, macOS Apple Silicon and macOS Intel download cards. It detects the browser platform only to highlight a likely match, then resolves direct links from the latest GitHub release. Until matching release assets exist, the cards deliberately link to the repository Releases page and report that the platform installer has not been published. Validate it with `node scripts/check-site.mjs`.
+
 ## Upstream references
 
 - Tauri prerequisites: https://v2.tauri.app/start/prerequisites/
